@@ -1,12 +1,12 @@
-import axios from 'axios';
+import api from './api';
 
-const API_URL = 'http://127.0.0.1:8000/api';
+
 
 const authService = {
     //  fonction d'inscription 
     register: async (userData) => {
         try {
-            const response = await axios.post(`${API_URL}/register`, userData, {
+            const response = await api.post(`/register`, userData, {
                 headers: {
                     'Content-Type': 'application/json',
                     'Accept': 'application/json'
@@ -29,7 +29,7 @@ const authService = {
     // TA NOUVELLE FONCTION DE CONNEXION
    login: async (credentials) => {
     try {
-        const response = await axios.post(`${API_URL}/login`, credentials, {
+        const response = await api.post(`/login`, credentials, {
             headers: {
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'

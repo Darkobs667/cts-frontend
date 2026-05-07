@@ -6,7 +6,7 @@ import {
 import api from '../services/api';
 
 /* ── Durée du scrutin en secondes (15 minutes) ── */
-const DUREE_SCRUTIN = 50 * 60; // 900 secondes
+const DUREE_SCRUTIN = 12 * 60; // 900 secondes
 
 /* ── Live dot ── */
 const LiveDot = () => (

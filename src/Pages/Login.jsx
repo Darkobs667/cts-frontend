@@ -56,12 +56,12 @@ const LoginCTS = () => {
         password: formData.password
       });
 
-      console.log("Connexion réussie :", response);
+      
 
       // 2. STOCKAGE DU TOKEN ET DES INFOS (Indispensable pour rester connecté)
       // On se base sur la réponse Postman : response.data contient access_token et user
       if (response.data && response.data.access_token) {
-        console.log("token bien reçu !")
+        
         localStorage.setItem('user_token', response.data.access_token);
         localStorage.setItem('user_tokenrefsh', response.data.refresh_token);
         localStorage.setItem('user_data', JSON.stringify(response.data.user));
@@ -69,7 +69,7 @@ const LoginCTS = () => {
         // 3. REDIRECTION DYNAMIQUE
         // On vérifie le rôle pour diriger au bon endroit
         const userRole = response.data.user.role; 
-        console.log("Contenu du role :", userRole);
+        
         
         if (userRole === 'admin') {
         navigate('/admin');

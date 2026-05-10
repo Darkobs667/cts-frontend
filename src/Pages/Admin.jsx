@@ -95,7 +95,7 @@ const Dashboard = () => {
     totalInscrits: 0,
     votesClotures: 0,
     votesEnCours: 0,
-    participation: '0%',
+    participation: '0',
   });
   const [recentElections, setRecentElections] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -144,7 +144,7 @@ const Dashboard = () => {
     { label: 'Électeurs inscrits',    value: stats.totalInscrits.toLocaleString(), icon: Users,       accent: 'bg-emerald-500 shadow-lg shadow-emerald-100', delay: '0ms'   },
     { label: 'Votes inactifs',        value: stats.votesClotures,                  icon: CheckCircle, accent: 'bg-blue-500 shadow-lg shadow-blue-100',    delay: '60ms'  },
     { label: 'Votes en cours',        value: stats.votesEnCours,                   icon: Clock,       accent: 'bg-amber-500 shadow-lg shadow-amber-100',   delay: '120ms' },
-    { label: 'Taux de participation', value: `${stats.participation}`,                  icon: TrendingUp,  accent: 'bg-purple-500 shadow-lg shadow-purple-100', delay: '180ms' },
+    { label: 'Taux de participation', value: `${stats.participation}%`,                  icon: TrendingUp,  accent: 'bg-purple-500 shadow-lg shadow-purple-100', delay: '180ms' },
   ];
 
   return (

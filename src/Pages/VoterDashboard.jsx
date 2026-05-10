@@ -118,7 +118,7 @@ const VoterDashboard = () => {
               totalElecteurs: s.totalInscrits || 0,
               votesClotures: s.votesClotures || 0,
               votesEnCours: s.votesEnCours || 0,
-              participation: s.participation || '0%',
+              participation: s.participation || '0',
             };
           }
         } catch (error) {
@@ -229,7 +229,7 @@ const VoterDashboard = () => {
               },
               {
                 label: 'Participation',
-                value: `${dashboardData.stats.participation}`,
+                value: `${dashboardData.stats.participation}%`,
                 icon: Vote,
                 accent: 'bg-purple-500 shadow-lg shadow-purple-100',
                 delay: '180ms',

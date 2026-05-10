@@ -229,7 +229,7 @@ const VoterDashboard = () => {
               },
               {
                 label: 'Participation',
-                value: `${dashboardData.stats.participation}%`,
+                value: `${dashboardData.stats.participation}`,
                 icon: Vote,
                 accent: 'bg-purple-500 shadow-lg shadow-purple-100',
                 delay: '180ms',

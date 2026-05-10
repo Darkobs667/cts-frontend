@@ -27,7 +27,7 @@ const VoterChoice = () => {
           nom: c.user
             ? `${c.user.first_name ?? ''} ${c.user.last_name ?? ''}`.trim()
             : `Utilisateur #${c.user_id}`,
-          profession: c.user?.role || 'Électeur',
+          profession: 'Candidat',
           slogan: c.slogan || c.bio || 'Pas de slogan',
           photo: c.photo_path ? `${import.meta.env.VITE_STORAGE_URL}/${c.photo_path}` : null,
           preview: c.photo_path ? `${import.meta.env.VITE_STORAGE_URL}/${c.photo_path}` : null,
@@ -144,10 +144,11 @@ const VoterChoice = () => {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2 mb-1">
                           <div>
-                            <h3 className="font-[900] text-slate-900 text-sm leading-tight">{c.nom}</h3>
                             <p className="text-[9px] font-black text-emerald-500 mt-0.5 tracking-wide uppercase">
                               {c.profession}
                             </p>
+                            <h3 className="font-[900] text-slate-900 text-sm leading-tight">{c.nom}</h3>
+                            
                           </div>
                           {/* check bubble */}
                           <div className={`w-6 h-6 rounded-xl border-2 flex items-center justify-center shrink-0 transition-all duration-300 ${

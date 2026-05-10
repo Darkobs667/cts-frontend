@@ -1,14 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AdminLayout from '../Components/AdminLayout';
 import {
-  Users, TrendingUp, ShieldCheck, Loader2, User, Radio, Timer, FileDown
+  Users, TrendingUp, ShieldCheck, Loader2, User, Radio, Timer, FileDown, XCircle, Printer
 } from 'lucide-react';
 import api from '../services/api';
 
-/* ── Durée du scrutin en secondes (15 minutes) ── */
-const DUREE_SCRUTIN = 12 * 60; // 900 secondes
-
-/* ── Live dot ── */
+/* ── Composants utilitaires (inchangés) ── */
 const LiveDot = () => (
   <span className="relative inline-flex h-2 w-2">
     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
@@ -16,11 +13,9 @@ const LiveDot = () => (
   </span>
 );
 
-/* ── Animated counter ── */
 const AnimatedNumber = ({ value, duration = 800 }) => {
   const [display, setDisplay] = useState(0);
   const raf = useRef(null);
-
   useEffect(() => {
     const start = display;
     const end = Number(value);
@@ -34,18 +29,14 @@ const AnimatedNumber = ({ value, duration = 800 }) => {
     };
     raf.current = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf.current);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
-
   return <>{display.toLocaleString()}</>;
 };
 
-/* ── Circular ring (participation) ── */
 const RingProgress = ({ value }) => {
   const r = 64;
   const circ = 2 * Math.PI * r;
   const offset = circ - (value / 100) * circ;
-
   return (
     <div className="relative w-44 h-44 flex items-center justify-center mx-auto">
       <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 144 144">
@@ -77,166 +68,174 @@ const RingProgress = ({ value }) => {
   );
 };
 
-/* ── Candidate row ── */
 const CandidateRow = ({ c, index, votersCount, tickPulse }) => {
-  const percent = votersCount > 0
-    ? ((c.votes_count / votersCount) * 100).toFixed(1)
-    : 0;
+  const percent = votersCount > 0 ? ((c.votes_count / votersCount) * 100).toFixed(1) : 0;
   const isLeader = index === 0 && c.votes_count > 0;
-
   return (
     <div className="group relative">
-      {isLeader && (
-        <span className="absolute -left-8 top-1/2 -translate-y-1/2 w-1 h-10 rounded-full bg-emerald-500" />
-      )}
-
+      {isLeader && <span className="absolute -left-8 top-1/2 -translate-y-1/2 w-1 h-10 rounded-full bg-emerald-500" />}
       <div className="flex items-center gap-4 mb-3">
-        <span className="text-[11px] font-black text-slate-300 w-4 shrink-0 text-right">
-          {index + 1}
-        </span>
-
-        <div
-          className={`w-11 h-11 rounded-2xl overflow-hidden shrink-0 border-2 transition-all duration-300
-            ${isLeader ? 'border-emerald-400 shadow-md shadow-emerald-100' : 'border-slate-100'}`}
-        >
+        <span className="text-[11px] font-black text-slate-300 w-4 shrink-0 text-right">{index + 1}</span>
+        <div className={`w-11 h-11 rounded-2xl overflow-hidden shrink-0 border-2 transition-all duration-300 ${isLeader ? 'border-emerald-400' : 'border-slate-100'}`}>
           {c.photo_path ? (
-            <img
-              src={`${import.meta.env.VITE_STORAGE_URL}/${c.photo_path}`}
-              className="w-full h-full object-cover"
-              alt={c.name}
-            />
+            <img src={`${import.meta.env.VITE_STORAGE_URL}/${c.photo_path}`} className="w-full h-full object-cover" alt={c.name} />
           ) : (
-            <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">
-              <User size={16} />
-            </div>
+            <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300"><User size={16} /></div>
           )}
         </div>
-
         <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-black text-slate-800 truncate leading-tight">
-            {c.name}
-          </h4>
+          <h4 className="text-sm font-black text-slate-800 truncate leading-tight">{c.name}</h4>
           <p className="text-[10px] font-bold text-slate-400 mt-0.5 flex items-center gap-1.5">
             <AnimatedNumber value={c.votes_count} /> voix comptabilisées
-            {tickPulse && isLeader && (
-              <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-            )}
+            {tickPulse && isLeader && <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />}
           </p>
         </div>
-
-        <span
-          className={`text-xl font-black tabular-nums ${
-            isLeader ? 'text-emerald-600' : 'text-slate-900'
-          }`}
-        >
-          {percent}%
-        </span>
+        <span className={`text-xl font-black tabular-nums ${isLeader ? 'text-emerald-600' : 'text-slate-900'}`}>{percent}%</span>
       </div>
-
       <div className="ml-9 h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200 shadow-inner">
-        <div
-          className={`h-full rounded-full transition-all duration-1000 ease-out ${
-            isLeader
-              ? 'bg-gradient-to-r from-emerald-400 to-emerald-600 shadow-sm shadow-emerald-200'
-              : 'bg-slate-300'
-          }`}
-          style={{ width: `${percent}%` }}
-        />
+        <div className={`h-full rounded-full transition-all duration-1000 ease-out ${isLeader ? 'bg-gradient-to-r from-emerald-400 to-emerald-600' : 'bg-slate-300'}`} style={{ width: `${percent}%` }} />
       </div>
     </div>
   );
 };
 
-/* ── Main page ── */
+// Carte d'un scrutin (affichage des résultats) - AVEC LEADER DANS L'EN-TÊTE
+const ElectionCard = ({ election, totalInscritsGlobaux, onClose }) => {
+  const { id, title, is_active, total_votes, candidates } = election;
+  const votersCount = total_votes;
+  const participationRate = totalInscritsGlobaux > 0 ? ((votersCount / totalInscritsGlobaux) * 100).toFixed(1) : 0;
+  const sortedCandidates = [...candidates].sort((a, b) => b.votes_count - a.votes_count);
+  const leader = sortedCandidates[0];
+  const [closing, setClosing] = useState(false);
+
+  const handleClose = async () => {
+    if (!window.confirm(`Clôturer définitivement le scrutin "${title}" ?`)) return;
+    setClosing(true);
+    try {
+      await api.put(`/positions/${id}`, { is_active: false });
+      if (onClose) onClose(id);
+    } catch (error) {
+      console.error("Erreur lors de la clôture", error);
+    } finally {
+      setClosing(false);
+    }
+  };
+
+  return (
+    <div className="bg-white rounded-[40px] border border-slate-100 shadow-sm overflow-hidden">
+      <div className="p-8">
+        {/* En-tête avec titre, statut, leader et bouton clôturer */}
+        <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              {is_active && <LiveDot />}
+              <h2 className="text-xl font-[900] text-slate-900">{title}</h2>
+            </div>
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase ${is_active ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-50 text-slate-500 border border-slate-200'}`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${is_active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+              {is_active ? 'En cours' : 'Clôturé'}
+            </div>
+          </div>
+
+          {/* Partie droite : leader (si votes) + bouton clôturer */}
+          <div className="flex items-center gap-4 flex-wrap">
+            {leader && leader.votes_count > 0 && (
+              <div className="flex items-center gap-2.5 bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-2 shadow-sm">
+                <div className="w-8 h-8 rounded-xl overflow-hidden ring-2 ring-emerald-400 shrink-0">
+                  {leader.photo_path ? (
+                    <img
+                      src={`${import.meta.env.VITE_STORAGE_URL}/${leader.photo_path}`}
+                      className="w-full h-full object-cover"
+                      alt={leader.name}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+                      <User size={14} className="text-slate-400" />
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <p className="text-[8px] font-black text-emerald-600 tracking-widest uppercase leading-none mb-0.5">
+                    En tête
+                  </p>
+                  <p className="text-sm font-black text-slate-800 leading-tight">
+                    {leader.name}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {is_active && (
+              <button
+                onClick={handleClose}
+                disabled={closing}
+                className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-all text-xs font-black"
+              >
+                <XCircle size={16} /> {closing ? 'Fermeture...' : 'Clôturer'}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Résultats (inchangés) */}
+        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex-1">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex items-center gap-2">
+                <Users size={14} className="text-slate-300" />
+                <h3 className="text-[11px] font-black text-slate-900">Répartition des voix</h3>
+              </div>
+              <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-full">
+                <Radio size={9} className="text-emerald-500" />
+                <span className="text-[9px] font-black text-emerald-600"><AnimatedNumber value={votersCount} /> votes</span>
+              </div>
+            </div>
+            <div className="space-y-8">
+              {sortedCandidates.map((c, i) => (
+                <CandidateRow key={i} c={c} index={i} votersCount={votersCount} tickPulse={false} />
+              ))}
+            </div>
+          </div>
+          <div className="w-full lg:w-80 bg-slate-50 rounded-3xl p-6 flex flex-col items-center gap-4">
+            <p className="text-[9px] font-black text-slate-400 tracking-widest uppercase">Taux de participation</p>
+            <RingProgress value={parseFloat(participationRate)} />
+            <div className="grid grid-cols-2 gap-3 w-full">
+              <div className="text-center p-3 bg-white rounded-2xl border border-slate-100">
+                <p className="text-xl font-[900] text-slate-900"><AnimatedNumber value={votersCount} /></p>
+                <p className="text-[8px] font-black text-slate-400 uppercase">Votants</p>
+              </div>
+              <div className="text-center p-3 bg-white rounded-2xl border border-slate-100">
+                <p className="text-xl font-[900] text-slate-400"><AnimatedNumber value={totalInscritsGlobaux} /></p>
+                <p className="text-[8px] font-black text-slate-400 uppercase">Inscrits</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 mt-2">
+              <TrendingUp size={11} className="text-slate-300" />
+              <p className="text-[9px] font-bold text-slate-400">Les votes sont anonymes.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ── Page principale (inchangée) ── */
 const AdminresultsPage = () => {
   const [loading, setLoading] = useState(true);
-  const [selectedElection, setSelectedElection] = useState(null);
+  const [elections, setElections] = useState([]);
   const [totalInscrits, setTotalInscrits] = useState(0);
-  const [tickPulse, setTickPulse] = useState(false);
   const [lastRefresh, setLastRefresh] = useState(null);
 
-  // Timer state
-  const [timeLeft, setTimeLeft] = useState(DUREE_SCRUTIN);
-  const timerRef = useRef(null);
-
-  /* ── Helper : arrêter le scrutin ── */
-  const handleStopElection = async () => {
-    if (!selectedElection) return;
+  const fetchAllResults = async () => {
     try {
-      await api.put(`/positions/${selectedElection.id}`, {
-        title: selectedElection.title,
-        description: selectedElection.description || '',
-        is_active: false,
-      });
-      setSelectedElection((prev) => (prev ? { ...prev, is_active: false } : null));
-    } catch (error) {
-      console.error("Erreur lors de la désactivation du scrutin", error);
-    }
-  };
-
-  const stopTimer = () => {
-    if (timerRef.current) {
-      clearInterval(timerRef.current);
-      timerRef.current = null;
-    }
-  };
-
-  /* ── Effet qui recalcul le temps restant à chaque changement de selectedElection ── */
-  useEffect(() => {
-    if (!selectedElection) return;
-
-    if (!selectedElection.is_active) {
-      setTimeLeft(0);
-      stopTimer();
-      return;
-    }
-
-    // Calcul à partir de started_at (ou updated_at en fallback)
-    const start = selectedElection.started_at
-      ? new Date(selectedElection.started_at).getTime()
-      : new Date(selectedElection.updated_at).getTime();
-    const now = Date.now();
-    const elapsedSeconds = Math.floor((now - start) / 1000);
-    const remaining = Math.max(DUREE_SCRUTIN - elapsedSeconds, 0);
-
-    setTimeLeft(remaining);
-
-    if (remaining > 0) {
-      stopTimer();
-      timerRef.current = setInterval(() => {
-        setTimeLeft((prev) => {
-          if (prev <= 1) {
-            clearInterval(timerRef.current);
-            handleStopElection();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    } else {
-      // Temps déjà écoulé → arrêt immédiat
-      handleStopElection();
-    }
-
-    return () => stopTimer();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedElection?.id, selectedElection?.is_active, selectedElection?.started_at]);
-
-  /* ── Chargement des résultats ── */
-  const fetchResults = async () => {
-    try {
-      const response = await api.get('/votes/results');
+      const response = await api.get('/votes/results/all');
       if (response.data?.success) {
-        const elections = response.data.data;
-        if (elections.length > 0) {
-          setSelectedElection(elections[0]);
-          setLastRefresh(new Date());
-          setTickPulse(true);
-          setTimeout(() => setTickPulse(false), 1200);
-        }
+        setElections(response.data.data);
+        setLastRefresh(new Date());
       }
     } catch (error) {
-      console.error('Erreur résultats:', error);
+      console.error('Erreur chargement résultats:', error);
     } finally {
       setLoading(false);
     }
@@ -255,20 +254,35 @@ const AdminresultsPage = () => {
 
   useEffect(() => {
     fetchStats();
-    fetchResults();
-    const interval = setInterval(fetchResults, 10000);
+    fetchAllResults();
+    const interval = setInterval(fetchAllResults, 10000);
     return () => clearInterval(interval);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  const handleCloseElection = (closedId) => {
+    setElections(prev => prev.map(e => e.id === closedId ? { ...e, is_active: false } : e));
   };
 
-  const handleExportPDF = () => {
+  const handlePrint = () => {
     window.print();
+  };
+
+  const handleExportPDF = async () => {
+    try {
+      const response = await api.get('/votes/results/pdf', {
+        responseType: 'blob',
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'resultats_scrutins.pdf');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Erreur lors du téléchargement du PDF :', error);
+    }
   };
 
   if (loading) {
@@ -276,216 +290,82 @@ const AdminresultsPage = () => {
       <AdminLayout activePage="results">
         <div className="flex h-[70vh] flex-col items-center justify-center">
           <Loader2 className="animate-spin text-emerald-500" size={48} />
-          <p className="mt-4 text-[10px] font-black text-slate-400 animate-pulse tracking-widest uppercase">
-            Calcul des voix en temps réel...
-          </p>
+          <p className="mt-4 text-[10px] font-black text-slate-400 animate-pulse uppercase">Chargement des résultats...</p>
         </div>
       </AdminLayout>
     );
   }
 
-  if (!selectedElection) {
+  if (elections.length === 0) {
     return (
       <AdminLayout activePage="results">
         <div className="text-center py-20">
-          <p className="text-slate-400 font-black uppercase tracking-widest text-xs">
-            Aucun scrutin en cours.
-          </p>
+          <p className="text-slate-400 font-black uppercase tracking-widest text-xs">Aucun scrutin disponible.</p>
         </div>
       </AdminLayout>
     );
   }
 
-  const { title, total_votes, candidates, is_active } = selectedElection;
-  const votersCount = total_votes;
-  const participationRate = totalInscrits > 0
-    ? ((votersCount / totalInscrits) * 100).toFixed(1)
-    : 0;
-
-  const sortedCandidates = [...candidates].sort((a, b) => b.votes_count - a.votes_count);
-  const leader = sortedCandidates[0];
-
   return (
     <AdminLayout activePage="results">
-      <style>{`
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(14px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
-        .fade-up { animation: fadeUp .45s ease both; }
-
-        @keyframes softGlow {
-          0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
-          50%       { box-shadow: 0 0 16px 4px rgba(16,185,129,.15); }
-        }
-        .soft-glow { animation: softGlow 2.8s ease-in-out infinite; }
-      `}</style>
-
-      <div className="animate-in fade-in duration-500">
-        {/* header */}
-        <div className="mb-8 fade-up flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+      <div className="mb-8">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
               <LiveDot />
-              <span className="text-[9px] font-black tracking-[0.2em] text-red-500 uppercase">
-                Live
-              </span>
+              <span className="text-[9px] font-black tracking-[0.2em] text-red-500 uppercase">Live</span>
               <span className="text-[9px] text-slate-400 font-medium">
                 · mise à jour toutes les 10s
                 {lastRefresh && ` · ${lastRefresh.toLocaleTimeString('fr-FR')}`}
               </span>
             </div>
-            <h1 className="text-xl md:text-2xl font-[900] text-slate-900">
-              Résultats de {title}
-            </h1>
+            <h1 className="text-xl md:text-2xl font-[900] text-slate-900">Résultats des scrutins</h1>
           </div>
 
-          {/* Timer + Statut + Bouton PDF */}
-          <div className="flex items-center gap-3 flex-wrap">
-            {is_active && (
-              <div className="flex items-center gap-2 bg-emerald-500 text-white px-5 py-2.5 rounded-2xl shadow-lg shadow-emerald-200">
-                <Timer size={20} className="animate-pulse" />
-                <div>
-                  <p className="text-[8px] font-black opacity-80 uppercase">Temps restant</p>
-                  <p className="text-xl font-[900] tabular-nums leading-none">{formatTime(timeLeft)}</p>
-                </div>
-              </div>
-            )}
-
-            <div
-              className={`flex items-center gap-2 px-4 py-2.5 rounded-2xl text-xs font-black uppercase ${
-                is_active
-                  ? 'bg-emerald-50 text-emerald-600 border border-emerald-200'
-                  : 'bg-slate-50 text-slate-500 border border-slate-200'
-              }`}
-            >
-              <span
-                className={`w-2 h-2 rounded-full ${is_active ? 'bg-emerald-500 animate-ping' : 'bg-slate-400'}`}
-              />
-              {is_active ? 'En cours' : 'Clôturé'}
-            </div>
-
+          <div className="flex gap-3">
             <button
-              onClick={handleExportPDF}
+              onClick={handlePrint}
               className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-5 py-2.5 rounded-2xl shadow-sm hover:bg-slate-50 transition-all font-black text-xs"
             >
-              <FileDown size={18} /> Exporter PDF
+              <Printer size={18} /> Imprimer
             </button>
-
-            {leader && leader.votes_count > 0 && (
-              <div className="flex items-center gap-2.5 bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-2.5 soft-glow">
-                <div className="w-8 h-8 rounded-xl overflow-hidden ring-2 ring-emerald-400 shrink-0">
-                  {leader.photo_path ? (
-                    <img
-                      src={`${import.meta.env.VITE_STORAGE_URL}/${leader.photo_path}`}
-                      className="w-full h-full object-cover"
-                      alt={leader.name}
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-slate-100 flex items-center justify-center">
-                      <User size={12} className="text-slate-400" />
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="text-[8px] font-black text-emerald-600 tracking-widest uppercase leading-none mb-0.5">
-                    En tête
-                  </p>
-                  <p className="text-xs font-black text-slate-800">{leader.name}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* candidates panel */}
-          <div
-            className="lg:col-span-2 bg-white p-8 md:p-10 rounded-[40px] border border-slate-100 shadow-sm fade-up"
-            style={{ animationDelay: '60ms' }}
-          >
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center gap-2">
-                <Users size={14} className="text-slate-300" />
-                <h3 className="text-[11px] font-black text-slate-900 tracking-wide">
-                  Répartition des voix
-                </h3>
-              </div>
-              <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-full">
-                <Radio size={9} className="text-emerald-500" />
-                <span className="text-[9px] font-black text-emerald-600">
-                  <AnimatedNumber value={votersCount} /> votes
-                </span>
-              </div>
-            </div>
-
-            <div className="space-y-8">
-              {sortedCandidates.map((c, i) => (
-                <CandidateRow
-                  key={i}
-                  c={c}
-                  index={i}
-                  votersCount={votersCount}
-                  tickPulse={tickPulse}
-                />
-              ))}
-            </div>
-
-            <div className="mt-12 p-5 bg-emerald-50/50 rounded-[28px] border-2 border-dashed border-emerald-100 flex items-center gap-4">
-              <div className="w-10 h-10 bg-white rounded-xl shadow-sm flex items-center justify-center text-emerald-500 shrink-0">
-                <ShieldCheck size={22} />
-              </div>
-              <div>
-                <p className="text-[10px] font-[900] text-emerald-700 mb-0.5">
-                  Algorithme de dépouillement vérifié
-                </p>
-                <p className="text-[9px] font-bold text-emerald-600/60 leading-relaxed">
-                  Anonymat strict, le double comptage est techniquement impossible.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* stats panel */}
-          <div
-            className="lg:col-span-1 bg-white p-8 rounded-[40px] border border-slate-100 shadow-sm flex flex-col items-center justify-between gap-8 fade-up"
-            style={{ animationDelay: '120ms' }}
-          >
-            <p className="text-[9px] font-black text-slate-300 tracking-widest uppercase self-start">
-              Taux de participation
-            </p>
-
-            <RingProgress value={parseFloat(participationRate)} />
-
-            <div className="w-full grid grid-cols-2 gap-3">
-              <div className="text-center p-4 bg-slate-50 rounded-3xl border border-slate-100">
-                <p className="text-2xl font-[900] text-slate-900 tabular-nums">
-                  <AnimatedNumber value={votersCount} />
-                </p>
-                <p className="text-[8px] font-black text-slate-400 mt-1 tracking-widest uppercase">
-                  Votants
-                </p>
-              </div>
-              <div className="text-center p-4 bg-slate-50 rounded-3xl border border-slate-100">
-                <p className="text-2xl font-[900] text-slate-400 tabular-nums">
-                  <AnimatedNumber value={totalInscrits} />
-                </p>
-                <p className="text-[8px] font-black text-slate-400 mt-1 tracking-widest uppercase">
-                  Inscrits
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-center gap-2">
-              <TrendingUp size={11} className="text-slate-300" />
-              <p className="text-[9px] font-bold text-slate-400">
-                Les votes sont anonymes.
-              </p>
-            </div>
+            <button
+              onClick={handleExportPDF}
+              className="flex items-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 px-5 py-2.5 rounded-2xl shadow-sm hover:bg-emerald-100 transition-all font-black text-xs"
+            >
+              <FileDown size={18} /> Télécharger PDF
+            </button>
           </div>
         </div>
       </div>
+
+      <div className="space-y-8 print:space-y-4 print:break-inside-avoid">
+        {elections.map(election => (
+          <ElectionCard
+            key={election.id}
+            election={election}
+            totalInscritsGlobaux={totalInscrits}
+            onClose={handleCloseElection}
+          />
+        ))}
+      </div>
+
+      <style>{`
+        @media print {
+          .sidebar, .no-print, .print\\:hidden {
+            display: none !important;
+          }
+          body {
+            background: white;
+            margin: 0;
+            padding: 20px;
+          }
+          .rounded-\\[40px\\], .rounded-3xl, .rounded-2xl {
+            box-shadow: none !important;
+            border: 1px solid #ddd !important;
+          }
+        }
+      `}</style>
     </AdminLayout>
   );
 };

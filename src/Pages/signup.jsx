@@ -1,14 +1,28 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, MailQuestionMark, Lock, Eye, EyeOff, UserPlus, ShieldCheck } from 'lucide-react';
 import { Link, useNavigate } from "react-router";
 import logocts from "../assets/logo-cts2-removebg-preview.png";
-import authService  from '../services/authService'; // Assure-toi que ce service existe
+import authService from '../services/authService';
+import FingerprintJS from '@fingerprintjs/fingerprintjs';
 
 const SignUp = () => {
     const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [serverError, setServerError] = useState('');
+    const [browserId, setBrowserId] = useState('');
+
+    useEffect(() => {
+        const setFp = async () => {
+            const fpPromise = FingerprintJS.load();
+            const fp = await fpPromise;
+            const result = await fp.get();
+            const visitorId = result.visitorId;
+            console.log("ID du navigateur :", visitorId);
+            setBrowserId(visitorId);
+        };
+        setFp();
+    }, []);
 
     const [formData, setFormData] = useState({
         prenom: '',
@@ -24,21 +38,17 @@ const SignUp = () => {
 
     const validateField = (name, value) => {
         let errorMsg = '';
-
         if (name === 'email') {
-            // REGEX STRICTE : n'autorise que le domaine @uadb.edu.sn
             const uadbRegex = /^[^\s@]+@uadb\.edu\.sn$/;
             if (value && !uadbRegex.test(value)) {
                 errorMsg = "Seules les adresses @uadb.edu.sn sont autorisées.";
             }
         }
-
         if (name === 'password') {
             if (value && value.length < 8) {
                 errorMsg = "Le mot de passe doit contenir au moins 8 caractères.";
             }
         }
-
         setErrors(prev => ({ ...prev, [name]: errorMsg }));
     };
 
@@ -49,98 +59,104 @@ const SignUp = () => {
         setServerError('');
     };
 
-   const handleSubmit = async (e) => {
-        e.preventDefault();
-        
-        // 1. Protection contre les doubles clics
-        if (loading) return;
-        setLoading(true);
-        setServerError('');
+    const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (loading) return;
+    setLoading(true);
+    setServerError('');
 
-        // 2. Préparation sécurisée des données
-        // On crée l'objet en s'assurant que les valeurs ne sont pas undefined
-        const dataForLaravel = {
-            first_name: formData.prenom || '', 
-            last_name: formData.nom || '',     
-            email: formData.email,
-            password: formData.password,
-            password_confirmation: formData.password,
-            code: null // 
-        };
-
-        // 3. LOG DE DÉBOGAGE 
-        console.log("TS-LOG: Tentative d'envoi vers Laravel...", dataForLaravel);
-
-        try {
-           
-            const response = await authService.register(dataForLaravel);
-            
-            console.log("TS-LOG: Succès Backend !", response);
-            alert("Félicitations ! Votre compte CYBER TECH SQUAD est créé.");
-            navigate('/login');
-            
-        } catch (error) {
-            // On récupère le message d'erreur précis du serveur s'il existe
-            const errorMsg = error.response?.data?.error || error.response?.data?.message || "Erreur de connexion au serveur.";
-            console.error("TS-LOG: Échec de l'inscription :", errorMsg);
-            
-            setServerError(`Erreur : ${errorMsg}`);
-        } finally {
-            setLoading(false);
-        }
+    const dataForLaravel = {
+        first_name: formData.prenom || '',
+        last_name: formData.nom || '',
+        email: formData.email,
+        password: formData.password,
+        password_confirmation: formData.password,
+        code: null,
+        browserId: browserId
     };
+
+    
+
+    try {
+        const response = await authService.register(dataForLaravel);
+        console.log("TS-LOG: Réponse brute :", response);
+
+        // 1. Vérifier si la réponse contient une erreur (singulier ou pluriel)
+        if (response && (response.error || response.errors)) {
+            const msg = response.error || response.errors;
+            setServerError(msg);
+            return;
+        }
+
+        // 2. Pas d'erreur -> succès
+        alert("Félicitations ! Votre compte électoral est créé.");
+        navigate('/login');
+
+    } catch (err) {
+        // 3. Gestion de toute erreur levée (réseau, HTTP, ou objet retourné)
+        
+
+        let message = "Erreur de connexion au serveur.";
+
+        // Si l'erreur a directement une propriété 'error' ou 'errors'
+        if (err?.error) message = err.error;
+        else if (err?.errors) message = err.errors;
+        // Si c'est une erreur Axios avec response
+        else if (err?.response?.data?.error) message = err.response.data.error;
+        else if (err?.response?.data?.errors) message = err.response.data.errors;
+        else if (err?.response?.data?.message) message = err.response.data.message;
+        // Si c'est une erreur JavaScript classique
+        else if (err?.message) message = err.message;
+        else if (typeof err === 'string') message = err;
+
+        setServerError(message);
+    } finally {
+        setLoading(false);
+    }
+};
+
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4 font-sans text-slate-800">
-            {/* Logo et Titre */}
             <div className="text-center mb-10">
                 <div className="flex justify-center mb-4">
                     <div className="w-20 h-20 rounded-2xl flex items-center justify-center">
-                        <img src={logocts} alt='logo cts' className="w-20 h-20 object-contain"  />
+                        <img src={logocts} alt='logo cts' className="w-20 h-20 object-contain" />
                     </div>
                 </div>
-                <h1 className="text-2xl font-black  uppercase text-slate-900">CYBER TECH SQUAD</h1>
+                <h1 className="text-2xl font-black uppercase text-slate-900">CYBER TECH SQUAD</h1>
                 <p className="text-slate-500 mt-2 font-medium">Créez votre compte électoral</p>
             </div>
 
-            {/* Carte du Formulaire */}
-            <div className="w-full max-w-md bg-white shadow-[0_20px_50px_rgba(0,0,0,0.05)]
-             rounded-3xl p-8 border border-slate-50">
-                
+            <div className="w-full max-w-md bg-white shadow-[0_20px_50px_rgba(0,0,0,0.05)] rounded-3xl p-8 border border-slate-50">
                 {serverError && (
-                    <div className="mb-4 p-3 bg-red-50 text-emerald-400 
-                    rounded-xl text-xs font-bold border border-red-100 text-center">
+                    <div className="mb-4 p-3 bg-red-50 text-emerald-500 rounded-xl text-xs font-bold border border-red-100 text-center">
                         {serverError}
                     </div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-5">
-                    
                     <div className="flex gap-4">
                         <div className="form-control w-1/2">
                             <label className="label py-0 mb-2 text-xs font-semibold text-slate-900">Prénom</label>
                             <input
                                 name="prenom"
                                 value={formData.prenom}
-                                onChange={handleChange} 
-                                type="text" 
-                                placeholder="Alioune" 
-                                className="input w-full h-12 pl-4 bg-slate-50 border-none 
-                                focus:ring-2 focus:ring-emerald-400 rounded-xl
-                                 text-slate-700 transition-all font-medium"
+                                onChange={handleChange}
+                                type="text"
+                                placeholder="Alioune"
+                                className="input w-full h-12 pl-4 bg-slate-50 border-none focus:ring-2 focus:ring-emerald-400 rounded-xl text-slate-700 transition-all font-medium"
                                 required
                             />
                         </div>
                         <div className="form-control w-1/2">
                             <label className="label py-0 mb-2 text-xs font-semibold text-slate-900">Nom</label>
-                            <input 
+                            <input
                                 name="nom"
                                 value={formData.nom}
                                 onChange={handleChange}
-                                type="text" 
-                                placeholder="Diop" 
-                                className="input w-full h-12 pl-4 bg-slate-50 
-                                border-none focus:ring-2 focus:ring-emerald-400 
-                                rounded-xl text-slate-700 transition-all font-medium"
+                                type="text"
+                                placeholder="Diop"
+                                className="input w-full h-12 pl-4 bg-slate-50 border-none focus:ring-2 focus:ring-emerald-400 rounded-xl text-slate-700 transition-all font-medium"
                                 required
                             />
                         </div>
@@ -152,15 +168,13 @@ const SignUp = () => {
                             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-500 transition-colors z-10">
                                 <MailQuestionMark size={18} />
                             </div>
-                            <input 
+                            <input
                                 name="email"
                                 value={formData.email}
                                 onChange={handleChange}
-                                type="email" 
-                                placeholder="prenom.nom@uadb.edu.sn" 
-                                className="input w-full h-14 pl-12 bg-slate-50
-                                 border-none focus:ring-2 focus:ring-emerald-400
-                                  rounded-2xl text-slate-700 transition-all font-medium" 
+                                type="email"
+                                placeholder="prenom.nom@uadb.edu.sn"
+                                className="input w-full h-14 pl-12 bg-slate-50 border-none focus:ring-2 focus:ring-emerald-400 rounded-2xl text-slate-700 transition-all font-medium"
                                 required
                             />
                         </div>
@@ -170,27 +184,22 @@ const SignUp = () => {
                     <div className="form-control w-full">
                         <label className="label py-0 mb-2 text-xs font-semibold text-slate-900">Mot de Passe</label>
                         <div className="relative group">
-                            <div className="absolute inset-y-0 left-4 flex items-center
-                             pointer-events-none text-slate-400
-                              group-focus-within:text-emerald-500 transition-colors z-10">
+                            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-500 transition-colors z-10">
                                 <Lock size={18} />
                             </div>
-                            <input 
+                            <input
                                 name="password"
                                 value={formData.password}
                                 onChange={handleChange}
-                                type={showPassword ? "text" : "password"} 
-                                placeholder="••••••••••••" 
-                                className="input w-full h-14 pl-12 pr-12 bg-slate-50 
-                                border-none focus:ring-2 focus:ring-emerald-400 
-                                rounded-2xl text-slate-700 transition-all" 
+                                type={showPassword ? "text" : "password"}
+                                placeholder="••••••••••••"
+                                className="input w-full h-14 pl-12 pr-12 bg-slate-50 border-none focus:ring-2 focus:ring-emerald-400 rounded-2xl text-slate-700 transition-all"
                                 required
                             />
-                            <button 
-                                type="button" 
+                            <button
+                                type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute inset-y-0 right-0 px-4 flex 
-                                items-center z-20 text-slate-400 hover:text-emerald-500"
+                                className="absolute inset-y-0 right-0 px-4 flex items-center z-20 text-slate-400 hover:text-emerald-500"
                             >
                                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                             </button>
@@ -198,13 +207,10 @@ const SignUp = () => {
                         {errors.password && <span className="text-emerald-400 text-[10px] font-bold mt-1 ml-2">{errors.password}</span>}
                     </div>
 
-                    <button 
+                    <button
                         disabled={loading || errors.email || errors.password || !formData.email}
                         type='submit'
-                        className="btn btn-primary w-full h-14 bg-[#00d991]
-                         hover:bg-[#00c282] border-none text-slate-900
-                          font-bold normal-case rounded-2xl flex items-center
-                           justify-center gap-3 shadow-lg shadow-emerald-100 mt-4 transition-all"
+                        className="btn btn-primary w-full h-14 bg-[#00d991] hover:bg-[#00c282] border-none text-slate-900 font-bold normal-case rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-emerald-100 mt-4 transition-all"
                     >
                         {loading ? <span className="loading loading-spinner"></span> : <><UserPlus size={20} /> Créer mon compte</>}
                     </button>

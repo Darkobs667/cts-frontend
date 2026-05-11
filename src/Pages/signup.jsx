@@ -18,7 +18,6 @@ const SignUp = () => {
             const fp = await fpPromise;
             const result = await fp.get();
             const visitorId = result.visitorId;
-            console.log("ID du navigateur :", visitorId);
             setBrowserId(visitorId);
         };
         setFp();
@@ -79,7 +78,6 @@ const SignUp = () => {
 
     try {
         const response = await authService.register(dataForLaravel);
-        console.log("TS-LOG: Réponse brute :", response);
 
         // 1. Vérifier si la réponse contient une erreur (singulier ou pluriel)
         if (response && (response.error || response.errors)) {

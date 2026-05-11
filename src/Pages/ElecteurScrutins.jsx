@@ -156,7 +156,7 @@ const ElecteurScrutins = () => {
                   style={{ animationDelay: `${i * 60}ms` }}
                 >
                   {/* ── row header ── */}
-                  <div className="p-5 md:p-6 flex items-center gap-4">
+                  <div className="p-5 md:p-6 flex items-start sm:items-center gap-4">
 
                     {/* icon */}
                     <div
@@ -172,11 +172,11 @@ const ElecteurScrutins = () => {
                       className="flex-1 min-w-0 cursor-pointer"
                       onClick={() => toggleCandidates(pos.id)}
                     >
-                      <h3 className="font-[900] text-slate-900 text-sm md:text-base leading-tight truncate">
+                      <h3 className="font-[900] text-slate-900 text-sm md:text-base leading-tight break-words">
                         {pos.title}
                       </h3>
                       {pos.description && (
-                        <p className="text-[10px] text-slate-400 font-medium mt-0.5 truncate">
+                        <p className="text-[10px] text-slate-400 font-medium mt-0.5 break-words">
                           {pos.description}
                         </p>
                       )}
@@ -221,7 +221,7 @@ const ElecteurScrutins = () => {
                             active:scale-95 transition-all duration-200"
                         >
                           <FilePlus size={14} />
-                          <span className="hidden sm:inline">Postuler</span>
+                          <span className="inline">Postuler</span>
                         </button>
                       )}
 
@@ -275,7 +275,7 @@ const ElecteurScrutins = () => {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <p className="font-[900] text-sm text-slate-800 leading-tight truncate">{cand.nom}</p>
-                                <p className="text-[10px] text-slate-400  mt-0.5 truncate">{cand.slogan}</p>
+                                <p className="text-[10px] text-slate-400 mt-0.5 truncate">{cand.slogan}</p>
                               </div>
                             </div>
                           ))}

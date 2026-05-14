@@ -17,7 +17,7 @@ import VoterResults from './Pages/VoterResults.jsx';
 import InviteCodes from './Pages/InviteCodes.jsx';
 import VerifyPending from './Pages/VerifyPending.jsx';
 import VerifyEmail from './Pages/VerifyEmail.jsx';
-import VoterVoteReceipts from './Pages/VoterVoteReceipts.jsx';
+import AdminCandidatures from './Pages/AdminCandidatures.jsx';
 
 function App() {
   return (
@@ -52,7 +52,7 @@ function App() {
       } />
       <Route path="/voter-receipts" element={
         <ProtectedRoute allowedRole="electeur">
-          <VoterVoteReceipts />
+          <VoterHistory />
         </ProtectedRoute>
       } />
       <Route path="/voterProfile" element={
@@ -100,6 +100,12 @@ function App() {
       <Route path="/invite-codes" element={
         <ProtectedRoute allowedRole="admin">
           <InviteCodes />
+        </ProtectedRoute>
+      } />
+
+      <Route path="/admin-candidatures" element={
+        <ProtectedRoute allowedRole="admin">
+          <AdminCandidatures />
         </ProtectedRoute>
       } />
 

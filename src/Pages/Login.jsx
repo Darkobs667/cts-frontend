@@ -48,18 +48,26 @@ const LoginCTS = () => {
         password: formData.password
       });
 
-      if (response.data && response.data.access_token) {
-        const userRole = response.data.user.role;
+      // authService.login retourne response.data (objet avec message + data)
+      const payload = response?.data ?? response;
+      const accessToken = payload?.access_token;
+      const userRole = payload?.user?.role;
+
+      if (accessToken && userRole) {
         if (userRole === 'admin') {
           navigate('/admin');
         } else {
           navigate('/voterDashboard');
         }
       } else {
-        setServerError("Erreur : Token non reçu du serveur.");
+        setServerError("Erreur : réponse inattendue du serveur.");
       }
     } catch (error) {
-      const errorMsg = error?.error || error?.message || "Identifiants incorrects.";
+      const errorMsg =
+        error?.error ||
+        error?.message ||
+        error?.response?.data?.error ||
+        "Identifiants incorrects.";
       setServerError(errorMsg);
     } finally {
       setLoading(false);

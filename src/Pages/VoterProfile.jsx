@@ -2,22 +2,43 @@ import React, { useState, useEffect } from 'react';
 import VoterLayout from "../Components/VoterLayout";
 import { User, ShieldCheck, Fingerprint, Mail, CreditCard, KeyRound } from 'lucide-react';
 import { getConnectedUser } from '../utils/userHelper';
+import api from '../services/api';
 
 const VoterProfile = () => {
   const [loading, setLoading] = useState(true);
   const [userData, setUserData] = useState(null);
 
   useEffect(() => {
-    const user = getConnectedUser();
-    if (user) {
+    // Charger depuis localStorage d'abord pour affichage instantané
+    const cached = getConnectedUser();
+    if (cached) {
       setUserData({
-        nom: user.fullName,
-        email: user.email,
-        uid: `CTS-${String(user.id).padStart(5, '0')}`,
-        initials: user.initials,
+        nom: cached.fullName,
+        email: cached.email,
+        uid: `CTS-${String(cached.id).padStart(5, '0')}`,
+        initials: cached.initials,
+        emailVerified: !!cached.email_verified_at,
       });
     }
-    setLoading(false);
+
+    // Puis rafraîchir depuis le serveur
+    api.get('/me')
+      .then(res => {
+        const user = res.data?.user;
+        if (user) {
+          localStorage.setItem('user_data', JSON.stringify(user));
+          const initials = `${user.first_name?.charAt(0) || ''}${user.last_name?.charAt(0) || ''}`.toUpperCase();
+          setUserData({
+            nom: `${user.first_name} ${user.last_name}`,
+            email: user.email,
+            uid: `CTS-${String(user.id).padStart(5, '0')}`,
+            initials,
+            emailVerified: !!user.email_verified_at,
+          });
+        }
+      })
+      .catch(() => {/* garder les données du cache */})
+      .finally(() => setLoading(false));
   }, []);
 
   return (

@@ -16,19 +16,21 @@ const authService = {
         }
     },
 
-    // TA NOUVELLE FONCTION DE CONNEXION
     login: async (credentials) => {
         try {
             const response = await api.post(`/login`, credentials);
-            const backendData = response.data.data;
+            const backendData = response.data?.data ?? response.data;
 
             if (backendData && backendData.access_token) {
                 localStorage.setItem('user_token', backendData.access_token);
-                localStorage.setItem('user_tokenrefsh', backendData.refresh_token);
+                if (backendData.refresh_token) {
+                    localStorage.setItem('user_tokenrefsh', backendData.refresh_token);
+                }
                 localStorage.setItem('user_data', JSON.stringify(backendData.user));
             }
 
-            return response.data;
+            // Retourner toujours l'objet data pour que Login.jsx puisse lire access_token et user
+            return backendData;
         } catch (error) {
             if (error.response && error.response.data) {
                 throw error.response.data;

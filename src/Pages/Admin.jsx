@@ -119,7 +119,7 @@ const Dashboard = () => {
           id: election.id,
           titre: election.title,
           statut: election.is_active == 1 ? 'Actif' : 'Inactif',
-          date_fin: election.created_at,
+          date_fin: election.closes_at || election.created_at,
         }));
         setRecentElections(recent);
       }

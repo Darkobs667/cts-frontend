@@ -3,7 +3,7 @@ import { Navigate } from 'react-router';
 import api from '../services/api';
 
 const ProtectedRoute = ({ children, allowedRole }) => {
-    const [status, setStatus] = useState('loading'); // 'loading' | 'ok' | 'unauthorized' | 'wrong_role'
+    const [status, setStatus] = useState('loading');
     const [userRole, setUserRole] = useState(null);
 
     useEffect(() => {
@@ -12,9 +12,22 @@ const ProtectedRoute = ({ children, allowedRole }) => {
 
         api.get('/me')
             .then(res => {
-                const role = res.data?.user?.role;
-                // Mettre à jour le localStorage avec les données fraîches du serveur
-                localStorage.setItem('user_data', JSON.stringify(res.data.user));
+                const user = res.data?.user;
+                if (!user) { setStatus('unauthorized'); return; }
+
+                // Toujours synchroniser le localStorage avec les données fraîches
+                localStorage.setItem('user_data', JSON.stringify(user));
+
+                // Vérifier que l'email est vérifié
+                if (!user.email_verified_at) {
+                    localStorage.removeItem('user_token');
+                    localStorage.removeItem('user_tokenrefsh');
+                    localStorage.removeItem('user_data');
+                    setStatus('unauthorized');
+                    return;
+                }
+
+                const role = user.role;
                 setUserRole(role);
                 setStatus(allowedRole && role !== allowedRole ? 'wrong_role' : 'ok');
             })

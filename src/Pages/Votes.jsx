@@ -69,7 +69,14 @@ const ElectionCard = ({ election, index, onDelete, onToggle }) => {
         {/* right — actions */}
         <div className="flex items-center gap-2 justify-end shrink-0">
           {/* edit */}
-          
+          <button
+            onClick={() => onEdit(election)}
+            title="Modifier"
+            className="w-10 h-10 flex items-center justify-center rounded-2xl text-slate-300
+              hover:bg-amber-50 hover:text-amber-400 transition-all duration-200"
+          >
+            <Edit3 size={17} />
+          </button>
 
           {/* delete */}
           <button

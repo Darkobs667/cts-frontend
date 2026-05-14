@@ -3,7 +3,7 @@ import AdminLayout from '../Components/AdminLayout';
 import Toast from '../Components/Toast';
 import {
   UserPlus, Search, MoreVertical, ShieldCheck, ShieldAlert,
-  Loader2, Trash2, Link2, X, Check, UserCheck, KeyRound, AlertTriangle,
+  Loader2, Trash2, Link2, X, Check, UserCheck, KeyRound, AlertTriangle, Copy,
 } from 'lucide-react';
 import AddElectorModal from '../Components/AddElectorModal';
 import { electeurService } from '../services/electeurService';
@@ -60,8 +60,12 @@ const Electeurs = () => {
   // Ajout d'un électeur
   const handleAddElector = async (newElectorData) => {
     try {
-      const savedElector = await electeurService.create(newElectorData);
-      setElecteurs([savedElector, ...electeurs]);
+      if (newElectorData._needsRefetch) {
+        // Refetch pour obtenir l'id et le status réels depuis le backend
+        await fetchElecteurs();
+      } else {
+        setElecteurs([newElectorData, ...electeurs]);
+      }
       setShowAddModal(false);
       setToast({ message: 'Électeur ajouté avec succès', type: 'success' });
     } catch (error) {
@@ -328,8 +332,9 @@ const Electeurs = () => {
                 <button
                   onClick={() => { navigator.clipboard.writeText(resetModal.password); }}
                   className="text-slate-400 hover:text-emerald-400 transition-colors"
+                  title="Copier"
                 >
-                  <X size={14} />
+                  <Copy size={14} />
                 </button>
               </div>
               <p className="text-[9px] font-medium text-slate-400 mt-2">

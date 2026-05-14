@@ -6,7 +6,13 @@ const authService = {
             const response = await api.post('/register', userData);
             return response.data;
         } catch (error) {
-            throw error.response?.data ?? { error: "Impossible de contacter le serveur de vote." };
+            if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+                throw { error: "Le serveur met du temps à répondre (démarrage en cours). Réessayez dans quelques secondes." };
+            }
+            if (!error.response) {
+                throw { error: "Impossible de contacter le serveur. Vérifiez votre connexion internet." };
+            }
+            throw error.response?.data ?? { error: "Erreur serveur inattendue." };
         }
     },
 

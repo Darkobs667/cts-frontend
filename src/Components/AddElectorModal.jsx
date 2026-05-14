@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { X, UserPlus, Mail, Lock, CheckCircle2, Loader2 } from 'lucide-react';
-import api from '../services/api';
+import { electeurService } from '../services/electeurService';
 
 const AddElectorModal = ({ close, onAdd }) => {
   const [formData, setFormData] = useState({
@@ -17,18 +17,19 @@ const AddElectorModal = ({ close, onAdd }) => {
     setLoading(true);
     setError('');
     try {
-      const res = await api.post('/register', {
+      await electeurService.create(formData);
+      // Refetch via onAdd pour avoir l'id et le status réels
+      onAdd({
         first_name: formData.first_name,
         last_name: formData.last_name,
+        nom: `${formData.first_name} ${formData.last_name}`.trim(),
         email: formData.email,
-        password: formData.password,
-        password_confirmation: formData.password,
-        browserId: `admin-${Date.now()}`,
+        status: 'En attente',
+        _needsRefetch: true,
       });
-      onAdd({ nom: `${formData.first_name} ${formData.last_name}`, email: formData.email });
       close();
     } catch (err) {
-      const msg = err.response?.data?.error || err.response?.data?.errors || "Erreur lors de l'ajout.";
+      const msg = err.error || err.errors || err.message || "Erreur lors de l'ajout.";
       setError(typeof msg === 'object' ? Object.values(msg).flat().join(' ') : msg);
     } finally {
       setLoading(false);

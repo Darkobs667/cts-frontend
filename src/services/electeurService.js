@@ -10,6 +10,15 @@ export const electeurService = {
         }));
     },
 
+    async create(userData) {
+        const response = await api.post('/register', {
+            ...userData,
+            password_confirmation: userData.password,
+            browserId: `admin-${Date.now()}`,
+        });
+        return response.data;
+    },
+
     async delete(id) {
         const response = await api.delete(`/users/${id}`);
         return response.data;

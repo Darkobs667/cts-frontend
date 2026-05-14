@@ -36,7 +36,9 @@ const ElecteurScrutins = () => {
           ...prev,
           [positionId]: data.map(c => ({
             id: c.id,
-            nom: c.user ? `${c.user.first_name ?? ''} ${c.user.last_name ?? ''}`.trim() : `Utilisateur #${c.user_id}`,
+            nom: c.user
+              ? (`${c.user.first_name ?? ''} ${c.user.last_name ?? ''}`.trim() || `Utilisateur #${c.user_id}`)
+              : `Utilisateur #${c.user_id}`,
             slogan: c.slogan || c.bio || 'Pas de profession de foi',
             photo: c.photo_path ? `${import.meta.env.VITE_STORAGE_URL}/${c.photo_path}` : null,
           }))

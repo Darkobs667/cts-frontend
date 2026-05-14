@@ -226,7 +226,7 @@ const Candidats = () => {
                   <option value="">-- Choisir un électeur --</option>
                   {users.map((user) => (
                     <option key={user.id} value={user.id}>
-                      {user.nom} ({user.email})
+                      {user.nom || `${user.first_name} ${user.last_name}`.trim()} ({user.email})
                     </option>
                   ))}
                 </select>
@@ -392,25 +392,19 @@ const Candidats = () => {
                           {getPhotoUrl(candidat.photo_path) ? (
                             <img
                               src={getPhotoUrl(candidat.photo_path)}
-                              alt={candidat.user?.nom}
-                              className="w-full h-full object-cover"
-                            />
-                          ) : getPhotoUrl(candidat.user?.photo) ? (
-                            <img
-                              src={getPhotoUrl(candidat.user.photo)}
-                              alt={candidat.user?.nom}
+                              alt={candidat.user ? `${candidat.user.first_name} ${candidat.user.last_name}` : ''}
                               className="w-full h-full object-cover"
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-600 font-black text-sm">
-                              {candidat.user?.nom?.charAt(0) || '?'}
+                              {candidat.user?.first_name?.charAt(0) || '?'}
                             </div>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <p className="font-bold text-slate-800 text-sm">
-                          {candidat.user?.nom || `Utilisateur #${candidat.user_id}`}
+                          {candidat.user ? `${candidat.user.first_name} ${candidat.user.last_name}`.trim() : `Utilisateur #${candidat.user_id}`}
                         </p>
                         <p className="text-[11px] text-slate-400">{candidat.user?.email}</p>
                       </td>

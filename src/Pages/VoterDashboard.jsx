@@ -92,12 +92,9 @@ const VoterDashboard = () => {
         ]);
 
         if (posRes.data?.success) {
-          const all = [
-            ...(posRes.data.data || []),
-            ...(posRes.data.failed || []),
-          ];
+          const all = posRes.data.data || [];
           const mapped = all
-            .filter(pos => pos.is_active == 1)
+            .filter(pos => pos.is_active === 1 || pos.is_active === true)
             .map(pos => ({
               id: pos.id,
               titre: pos.title,

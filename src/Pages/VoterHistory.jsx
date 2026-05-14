@@ -83,7 +83,7 @@ const VoteCard = ({ v, index, onDownload }) => {
           <Hash size={10} className="text-slate-300" />
           <code className="bg-slate-900 text-[10px] px-3 py-1.5 rounded-xl font-bold
             text-emerald-400 border border-slate-800 tracking-wider">
-            {v.transaction_ref}
+            {v.transaction_ref || '—'}
           </code>
         </div>
 
@@ -115,7 +115,7 @@ const VoteCard = ({ v, index, onDownload }) => {
         </div>
         <code className="bg-slate-900 text-[9px] px-2.5 py-1 rounded-lg font-bold
           text-emerald-400 border border-slate-800 tracking-wider">
-          {v.transaction_ref}
+          {v.transaction_ref || '—'}
         </code>
       </div>
     </div>

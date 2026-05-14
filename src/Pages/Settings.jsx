@@ -220,7 +220,7 @@ const Candidats = () => {
                   <option value="">-- Choisir un poste --</option>
                   {positions.map((pos) => (
                     <option key={pos.id} value={pos.id}>
-                      {pos.title} ({pos.is_active == 1 ? 'Actif' : 'Inactif'})
+                      {pos.title} ({pos.is_active === 1 || pos.is_active === true ? 'Actif' : 'Inactif'})
                     </option>
                   ))}
                 </select>
@@ -395,11 +395,11 @@ const Candidats = () => {
                           {candidat.position?.title || `Poste #${candidat.position_id}`}
                         </p>
                         <span className={`mt-1 px-2 py-0.5 text-[9px] font-black rounded-full uppercase ${
-                          candidat.position?.is_active == 1
+                          candidat.position?.is_active === 1 || candidat.position?.is_active === true
                             ? 'bg-emerald-100 text-emerald-600'
                             : 'bg-slate-100 text-slate-500'
                         }`}>
-                          {candidat.position?.is_active == 1 ? 'Actif' : 'Inactif'}
+                          {candidat.position?.is_active === 1 || candidat.position?.is_active === true ? 'Actif' : 'Inactif'}
                         </span>
                       </td>
                       <td className="px-6 py-4">

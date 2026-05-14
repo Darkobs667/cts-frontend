@@ -185,7 +185,7 @@ const Electeurs = () => {
                   <option value="">-- Sélectionnez un poste --</option>
                   {positions.map((pos) => (
                     <option key={pos.id} value={pos.id}>
-                      {pos.title} ({pos.is_active == 1 ? 'En ligne' : 'Inactif'})
+                      {pos.title} ({pos.is_active === 1 || pos.is_active === true ? 'En ligne' : 'Inactif'})
                     </option>
                   ))}
                 </select>

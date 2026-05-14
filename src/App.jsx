@@ -45,11 +45,6 @@ function App() {
           <VoterHistory />
         </ProtectedRoute>
       } />
-      <Route path="/voter-receipts" element={
-        <ProtectedRoute allowedRole="electeur">
-          <VoterHistory />
-        </ProtectedRoute>
-      } />
       <Route path="/voterProfile" element={
         <ProtectedRoute allowedRole="electeur">
           <VoterProfile />

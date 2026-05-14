@@ -17,7 +17,6 @@ const VoterProfile = () => {
         email: cached.email,
         uid: `CTS-${String(cached.id).padStart(5, '0')}`,
         initials: cached.initials,
-        emailVerified: !!cached.email_verified_at,
       });
     }
 
@@ -33,7 +32,6 @@ const VoterProfile = () => {
             email: user.email,
             uid: `CTS-${String(user.id).padStart(5, '0')}`,
             initials,
-            emailVerified: !!user.email_verified_at,
           });
         }
       })

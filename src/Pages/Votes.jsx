@@ -7,7 +7,7 @@ import api from '../services/api';
 
 /* ── Status badge ── */
 const StatusBadge = ({ isActive }) =>
-  isActive == 1 ? (
+  isActive === 1 || isActive === true ? (
     <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[9px] font-black bg-emerald-50 text-emerald-600 border border-emerald-100">
       <span className="relative flex h-1.5 w-1.5">
         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -23,7 +23,7 @@ const StatusBadge = ({ isActive }) =>
   );
 
 /* ── Election card ── */
-const ElectionCard = ({ election, index, onDelete, onToggle }) => {
+const ElectionCard = ({ election, index, onDelete, onToggle, onEdit }) => {
   const isActive = election.is_active == 1;
 
   return (
@@ -121,7 +121,7 @@ const Votes = () => {
     try {
       const response = await api.get('/positions');
       if (response.data && response.data.success) {
-        const all = [...(response.data.data || []), ...(response.data.failed || [])];
+        const all = response.data.data || [];
         setElections(all);
       } else {
         setElections([]);
@@ -148,7 +148,7 @@ const Votes = () => {
   };
 
   const toggleActive = async (election) => {
-    const newActive = election.is_active == 1 ? 0 : 1;
+    const newActive = election.is_active === 1 || election.is_active === true ? 0 : 1;
     try {
       await api.put(`/positions/${election.id}`, {
         title: election.title,
@@ -170,8 +170,8 @@ const Votes = () => {
     fetchElections();
   };
 
-  const activeCount = elections.filter(e => e.is_active == 1).length;
-  const inactiveCount = elections.filter(e => e.is_active != 1).length;
+  const activeCount = elections.filter(e => e.is_active === 1 || e.is_active === true).length;
+  const inactiveCount = elections.filter(e => e.is_active !== 1 && e.is_active !== true).length;
 
   return (
     <AdminLayout activePage="votes">

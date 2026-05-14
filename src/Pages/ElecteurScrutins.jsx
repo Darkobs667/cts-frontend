@@ -14,7 +14,7 @@ const ElecteurScrutins = () => {
     api.get('/positions')
       .then(res => {
         if (res.data?.success) {
-          const all = [...(res.data.data || []), ...(res.data.failed || [])];
+          const all = res.data.data || [];
           setPositions(all);
         }
       })
@@ -88,7 +88,7 @@ const ElecteurScrutins = () => {
         ) : (
           <div className="flex flex-col gap-3">
             {positions.map((pos, i) => {
-              const isActive = pos.is_active == 1;
+              const isActive = pos.is_active === 1 || pos.is_active === true;
               const isExpanded = expandedId === pos.id;
 
               return (

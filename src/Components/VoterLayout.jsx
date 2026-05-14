@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import Logocts from "../assets/logo-cts2-removebg-preview.png";
 import { LayoutDashboard, CheckCircle, User, LogOut, Menu, X, Vote, ShieldAlert, TrendingUp } from 'lucide-react';
 import { getConnectedUser } from '../utils/userHelper';
-import api from '../services/api';
+import authService from '../services/authService';
 
 /* ── nav item ── */
 const NavItem = ({ item, isActive }) => (
@@ -53,14 +53,8 @@ const VoterLayout = ({ children, activePage }) => {
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    try {
-      await api.post('/logout');
-    } catch (_) {}
-    setTimeout(() => {
-      localStorage.clear();
-      sessionStorage.clear();
-      navigate('/login');
-    }, 1200);
+    await authService.logout();
+    setTimeout(() => navigate('/login'), 1200);
   };
 
   const user = getConnectedUser();

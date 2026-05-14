@@ -113,12 +113,12 @@ const Dashboard = () => {
     try {
       const response = await api.get('/positions');
       if (response.data && response.data.success) {
-        const all = [...(response.data.data || []), ...(response.data.failed || [])];
+        const all = response.data.data || [];
         all.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
         const recent = all.slice(0, 4).map((election) => ({
           id: election.id,
           titre: election.title,
-          statut: election.is_active == 1 ? 'Actif' : 'Inactif',
+          statut: election.is_active === 1 || election.is_active === true ? 'Actif' : 'Inactif',
           date_fin: election.closes_at || election.created_at,
         }));
         setRecentElections(recent);

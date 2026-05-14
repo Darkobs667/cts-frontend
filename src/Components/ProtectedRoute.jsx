@@ -20,6 +20,7 @@ const ProtectedRoute = ({ children, allowedRole }) => {
             })
             .catch(() => {
                 localStorage.removeItem('user_token');
+                localStorage.removeItem('user_tokenrefsh');
                 localStorage.removeItem('user_data');
                 setStatus('unauthorized');
             });

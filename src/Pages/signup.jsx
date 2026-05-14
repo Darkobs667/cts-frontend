@@ -50,6 +50,12 @@ const SignUp = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (loading) return;
+
+        if (!browserId) {
+            setServerError("Initialisation en cours, veuillez réessayer.");
+            return;
+        }
+
         setLoading(true);
         setServerError('');
 

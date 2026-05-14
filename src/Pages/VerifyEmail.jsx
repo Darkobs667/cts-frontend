@@ -9,12 +9,14 @@ const VerifyEmail = () => {
     const [status, setStatus] = useState('loading');
 
     useEffect(() => {
+        let timer;
         api.get(`/verify-email/${token}`)
             .then(() => {
                 setStatus('success');
-                setTimeout(() => navigate('/login'), 3000);
+                timer = setTimeout(() => navigate('/login'), 3000);
             })
             .catch(() => setStatus('error'));
+        return () => clearTimeout(timer);
     }, [token]);
 
     return (

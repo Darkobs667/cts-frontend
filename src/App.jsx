@@ -17,6 +17,7 @@ import VoterResults from './Pages/VoterResults.jsx';
 import InviteCodes from './Pages/InviteCodes.jsx';
 import VerifyPending from './Pages/VerifyPending.jsx';
 import VerifyEmail from './Pages/VerifyEmail.jsx';
+import VoterVoteReceipts from './Pages/VoterVoteReceipts.jsx';
 
 function App() {
   return (
@@ -49,7 +50,11 @@ function App() {
           <VoterHistory />
         </ProtectedRoute>
       } />
-      <Route path="/voter-receipts" element={<Navigate to="/voterHistory" replace />} />
+      <Route path="/voter-receipts" element={
+        <ProtectedRoute allowedRole="electeur">
+          <VoterVoteReceipts />
+        </ProtectedRoute>
+      } />
       <Route path="/voterProfile" element={
         <ProtectedRoute allowedRole="electeur">
           <VoterProfile />

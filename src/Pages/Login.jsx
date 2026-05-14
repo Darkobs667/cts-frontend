@@ -49,10 +49,6 @@ const LoginCTS = () => {
       });
 
       if (response.data && response.data.access_token) {
-        localStorage.setItem('user_token', response.data.access_token);
-        localStorage.setItem('user_tokenrefsh', response.data.refresh_token);
-        localStorage.setItem('user_data', JSON.stringify(response.data.user));
-
         const userRole = response.data.user.role;
         if (userRole === 'admin') {
           navigate('/admin');
@@ -63,7 +59,7 @@ const LoginCTS = () => {
         setServerError("Erreur : Token non reçu du serveur.");
       }
     } catch (error) {
-      const errorMsg = error.response?.data?.error || error.response?.data?.message || "Identifiants incorrects.";
+      const errorMsg = error?.error || error?.message || "Identifiants incorrects.";
       setServerError(errorMsg);
     } finally {
       setLoading(false);

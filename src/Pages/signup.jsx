@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, MailQuestionMark, Lock, Eye, EyeOff, UserPlus, ShieldCheck } from 'lucide-react';
+import { MailQuestionMark, Lock, Eye, EyeOff, UserPlus, ShieldCheck } from 'lucide-react';
 import { Link, useNavigate } from "react-router";
 import logocts from "../assets/logo-cts2-removebg-preview.png";
 import authService from '../services/authService';
@@ -14,11 +14,9 @@ const SignUp = () => {
 
     useEffect(() => {
         const setFp = async () => {
-            const fpPromise = FingerprintJS.load();
-            const fp = await fpPromise;
+            const fp = await FingerprintJS.load();
             const result = await fp.get();
-            const visitorId = result.visitorId;
-            setBrowserId(visitorId);
+            setBrowserId(result.visitorId);
         };
         setFp();
     }, []);
@@ -28,13 +26,9 @@ const SignUp = () => {
         nom: '',
         email: '',
         password: '',
-        invite_code: ''
     });
 
-    const [errors, setErrors] = useState({
-        email: '',
-        password: ''
-    });
+    const [errors, setErrors] = useState({ email: '', password: '' });
 
     const validateField = (name, value) => {
         let errorMsg = '';
@@ -60,60 +54,43 @@ const SignUp = () => {
     };
 
     const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (loading) return;
-    setLoading(true);
-    setServerError('');
+        e.preventDefault();
+        if (loading) return;
+        setLoading(true);
+        setServerError('');
 
-    const dataForLaravel = {
-        first_name: formData.prenom || '',
-        last_name: formData.nom || '',
-        email: formData.email,
-        password: formData.password,
-        password_confirmation: formData.password,
-        code: null,
-        browserId: browserId,
-        invite_code: formData.invite_code
-    };
+        const dataForLaravel = {
+            first_name: formData.prenom || '',
+            last_name: formData.nom || '',
+            email: formData.email,
+            password: formData.password,
+            password_confirmation: formData.password,
+            code: null,
+            browserId: browserId,
+        };
 
-    
+        try {
+            const response = await authService.register(dataForLaravel);
 
-    try {
-        const response = await authService.register(dataForLaravel);
+            if (response && (response.error || response.errors)) {
+                setServerError(response.error || response.errors);
+                return;
+            }
 
-        // 1. Vérifier si la réponse contient une erreur (singulier ou pluriel)
-        if (response && (response.error || response.errors)) {
-            const msg = response.error || response.errors;
-            setServerError(msg);
-            return;
+            navigate('/verify-pending');
+        } catch (err) {
+            let message = "Erreur de connexion au serveur.";
+            if (err?.error) message = err.error;
+            else if (err?.errors) message = err.errors;
+            else if (err?.response?.data?.error) message = err.response.data.error;
+            else if (err?.response?.data?.errors) message = err.response.data.errors;
+            else if (err?.response?.data?.message) message = err.response.data.message;
+            else if (err?.message) message = err.message;
+            setServerError(message);
+        } finally {
+            setLoading(false);
         }
-
-        // 2. Pas d'erreur -> succès
-        alert("Félicitations ! Votre compte électoral est créé.");
-        navigate('/login');
-
-    } catch (err) {
-        // 3. Gestion de toute erreur levée (réseau, HTTP, ou objet retourné)
-        
-
-        let message = "Erreur de connexion au serveur.";
-
-        // Si l'erreur a directement une propriété 'error' ou 'errors'
-        if (err?.error) message = err.error;
-        else if (err?.errors) message = err.errors;
-        // Si c'est une erreur Axios avec response
-        else if (err?.response?.data?.error) message = err.response.data.error;
-        else if (err?.response?.data?.errors) message = err.response.data.errors;
-        else if (err?.response?.data?.message) message = err.response.data.message;
-        // Si c'est une erreur JavaScript classique
-        else if (err?.message) message = err.message;
-        else if (typeof err === 'string') message = err;
-
-        setServerError(message);
-    } finally {
-        setLoading(false);
-    }
-};
+    };
 
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4 font-sans text-slate-800">
@@ -129,25 +106,12 @@ const SignUp = () => {
 
             <div className="w-full max-w-md bg-white shadow-[0_20px_50px_rgba(0,0,0,0.05)] rounded-3xl p-8 border border-slate-50">
                 {serverError && (
-                    <div className="mb-4 p-3 bg-red-50 text-emerald-500 rounded-xl text-xs font-bold border border-red-100 text-center">
+                    <div className="mb-4 p-3 bg-red-50 text-red-500 rounded-xl text-xs font-bold border border-red-100 text-center">
                         {serverError}
                     </div>
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-5">
-                    <div className="form-control w-full">
-                        <label className="label py-0 mb-2 text-xs font-semibold text-slate-900">Code d'invitation</label>
-                        <input
-                            name="invite_code"
-                            value={formData.invite_code}
-                            onChange={handleChange}
-                            type="text"
-                            placeholder="Ex: AB12CD34"
-                            className="input w-full h-12 pl-4 bg-slate-50 border-none focus:ring-2 focus:ring-emerald-400 rounded-xl text-slate-700 transition-all font-mono tracking-widest uppercase"
-                            required
-                        />
-                    </div>
-
                     <div className="flex gap-4">
                         <div className="form-control w-1/2">
                             <label className="label py-0 mb-2 text-xs font-semibold text-slate-900">Prénom</label>
@@ -191,7 +155,7 @@ const SignUp = () => {
                                 required
                             />
                         </div>
-                        {errors.email && <span className="text-emerald-400 text-[10px] font-bold mt-1 ml-2">{errors.email}</span>}
+                        {errors.email && <span className="text-red-400 text-[10px] font-bold mt-1 ml-2">{errors.email}</span>}
                     </div>
 
                     <div className="form-control w-full">
@@ -217,11 +181,11 @@ const SignUp = () => {
                                 {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                             </button>
                         </div>
-                        {errors.password && <span className="text-emerald-400 text-[10px] font-bold mt-1 ml-2">{errors.password}</span>}
+                        {errors.password && <span className="text-red-400 text-[10px] font-bold mt-1 ml-2">{errors.password}</span>}
                     </div>
 
                     <button
-                        disabled={loading || errors.email || errors.password || !formData.email || !formData.invite_code}
+                        disabled={loading || !!errors.email || !!errors.password || !formData.email}
                         type='submit'
                         className="btn btn-primary w-full h-14 bg-[#00d991] hover:bg-[#00c282] border-none text-slate-900 font-bold normal-case rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-emerald-100 mt-4 transition-all"
                     >

@@ -81,11 +81,9 @@ const SignUp = () => {
         } catch (err) {
             let message = "Erreur de connexion au serveur.";
             if (err?.error) message = err.error;
-            else if (err?.errors) message = err.errors;
-            else if (err?.response?.data?.error) message = err.response.data.error;
-            else if (err?.response?.data?.errors) message = err.response.data.errors;
-            else if (err?.response?.data?.message) message = err.response.data.message;
-            else if (err?.message) message = err.message;
+            else if (typeof err?.errors === 'string') message = err.errors;
+            else if (err?.message && !err.message.includes('500')) message = err.message;
+            else if (err?.message?.includes('500')) message = "Erreur serveur. Veuillez réessayer.";
             setServerError(message);
         } finally {
             setLoading(false);

@@ -48,17 +48,13 @@ const LoginCTS = () => {
         password: formData.password
       });
 
-      // authService.login retourne response.data (objet avec message + data)
-      const payload = response?.data ?? response;
-      const accessToken = payload?.access_token;
-      const userRole = payload?.user?.role;
+      // authService.login retourne response.data = { message, data: { access_token, user, refresh_token } }
+      const userRole = response?.data?.user?.role;
 
-      if (accessToken && userRole) {
-        if (userRole === 'admin') {
-          navigate('/admin');
-        } else {
-          navigate('/voterDashboard');
-        }
+      if (userRole === 'admin') {
+        navigate('/admin');
+      } else if (userRole) {
+        navigate('/voterDashboard');
       } else {
         setServerError("Erreur : réponse inattendue du serveur.");
       }

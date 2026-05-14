@@ -1,10 +1,11 @@
 // ─────────────────────────────────────────────────────────────
 // Sidebar.jsx
 // ─────────────────────────────────────────────────────────────
-import { LayoutDashboard, Users, Vote, ExternalLink, LogOut, ChartPie, X, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, Users, Vote, ExternalLink, LogOut, ChartPie, X, ClipboardList, KeyRound } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import Logocts from "../assets/logo-cts2-removebg-preview.png";
 import { useState } from 'react';
+import authService from '../services/authService';
 
 const SidebarItem = ({ icon: Icon, label, to, active }) => (
   <Link
@@ -38,20 +39,8 @@ const Sidebar = ({ isOpen, toggle, activePage }) => {
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    try {
-      const token = localStorage.getItem('user_token');
-      if (token) {
-        await fetch(`${import.meta.env.VITE_API_URL}/logout`, {
-          method: 'POST',
-          headers: { Authorization: `Bearer ${token}` },
-        });
-      }
-    } catch (_) {}
-    setTimeout(() => {
-      localStorage.clear();
-      sessionStorage.clear();
-      navigate('/login');
-    }, 1200);
+    await authService.logout();
+    setTimeout(() => navigate('/login'), 1200);
   };
 
   const adminMenuItems = [
@@ -61,6 +50,7 @@ const Sidebar = ({ isOpen, toggle, activePage }) => {
     { id: 'parametres',          label: 'Candidats & scrutins',      icon: ExternalLink,    to: '/candidats'           },
     { id: 'candidatures',        label: 'Candidatures en attente',   icon: ClipboardList,   to: '/admin-candidatures'  },
     { id: 'adminresultsPage',    label: 'Résultats',                 icon: ChartPie,        to: '/adminresultsPage'    },
+    { id: 'invite-codes',        label: 'Codes d\'invitation',       icon: KeyRound,        to: '/invite-codes'        },
   ];
 
   return (

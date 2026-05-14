@@ -1,7 +1,23 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import VoterLayout from '../Components/VoterLayout';
-import { User, Trophy, Vote, TrendingUp } from 'lucide-react';
+import { User, Trophy, Vote, TrendingUp, RefreshCw } from 'lucide-react';
 import api from '../services/api';
+
+const AnimatedBar = ({ pct, isWinner }) => {
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const t = setTimeout(() => setWidth(pct), 100);
+    return () => clearTimeout(t);
+  }, [pct]);
+  return (
+    <div className="ml-12 h-2 bg-slate-100 rounded-full overflow-hidden">
+      <div
+        className={`h-full rounded-full transition-all duration-1000 ease-out ${isWinner ? 'bg-gradient-to-r from-emerald-400 to-emerald-600' : 'bg-slate-300'}`}
+        style={{ width: `${width}%` }}
+      />
+    </div>
+  );
+};
 
 const ResultCard = ({ election, index }) => {
     const sorted = [...(election.candidates || [])].sort((a, b) => b.votes_count - a.votes_count);
@@ -60,12 +76,7 @@ const ResultCard = ({ election, index }) => {
                                 <span className={`flex-1 text-sm font-[900] ${isWinner ? 'text-emerald-700' : 'text-slate-700'}`}>{c.name}</span>
                                 <span className={`text-sm font-black tabular-nums ${isWinner ? 'text-emerald-600' : 'text-slate-400'}`}>{pct}%</span>
                             </div>
-                            <div className="ml-12 h-2 bg-slate-100 rounded-full overflow-hidden">
-                                <div
-                                    className={`h-full rounded-full transition-all duration-1000 ${isWinner ? 'bg-gradient-to-r from-emerald-400 to-emerald-600' : 'bg-slate-300'}`}
-                                    style={{ width: `${pct}%` }}
-                                />
-                            </div>
+                        <AnimatedBar pct={pct} isWinner={isWinner} />
                         </div>
                     );
                 })}

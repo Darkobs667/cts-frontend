@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import AdminLayout from '../Components/AdminLayout';
-import StatCard from '../Components/StatCard';
 import { Users, Vote, CheckCircle, Clock, Loader2, ArrowRight, TrendingUp, Calendar } from 'lucide-react';
 import adminService from '../services/adminService';
 import api from '../services/api';
@@ -136,7 +135,9 @@ const Dashboard = () => {
 
   useEffect(() => {
     loadData();
-    const interval = setInterval(loadData, 120000);
+    const interval = setInterval(() => {
+      if (!document.hidden) loadData();
+    }, 120000);
     return () => clearInterval(interval);
   }, []);
 

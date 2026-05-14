@@ -1,9 +1,11 @@
 // ─────────────────────────────────────────────────────────────
 // Navbar.jsx
 // ─────────────────────────────────────────────────────────────
-import { Menu, Bell } from 'lucide-react';
+import { Menu } from 'lucide-react';
+import { getConnectedUser } from '../utils/userHelper';
 
 const Navbar = ({ toggleSidebar }) => {
+  const user = getConnectedUser();
   return (
     <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between
       px-4 md:px-8 sticky top-0 z-30">
@@ -32,23 +34,15 @@ const Navbar = ({ toggleSidebar }) => {
 
       {/* right */}
       <div className="flex items-center gap-3 md:gap-4">
-        {/* notification bell */}
-        <button className="relative w-9 h-9 flex items-center justify-center
-          text-slate-400 hover:text-emerald-500 hover:bg-slate-50
-          rounded-2xl border border-slate-100 transition-all duration-200">
-          <Bell size={17} />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white" />
-        </button>
-
         {/* user chip */}
         <div className="flex items-center gap-3 pl-3 border-l border-slate-100">
           <div className="hidden sm:block text-right">
-            <p className="text-xs font-[900] text-slate-900 leading-tight">Admin CTS</p>
+            <p className="text-xs font-[900] text-slate-900 leading-tight">{user?.fullName || 'Admin CTS'}</p>
             <p className="text-[9px] font-bold text-emerald-500">En ligne</p>
           </div>
           {/* avatar */}
           <div className="w-9 h-9 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center shrink-0">
-            <span className="text-[11px] font-black text-slate-500">A</span>
+            <span className="text-[11px] font-black text-slate-500">{user?.initials || 'A'}</span>
           </div>
         </div>
       </div>

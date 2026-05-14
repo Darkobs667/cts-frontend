@@ -1,22 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import VoterLayout from "../Components/VoterLayout";
-import { ChevronDown, ChevronUp, User, Vote } from 'lucide-react';
+import { ChevronDown, ChevronUp, User, Vote, CheckCircle2 } from 'lucide-react';
 import api from '../services/api';
 
 const ElecteurScrutins = () => {
   const [loading, setLoading] = useState(true);
   const [positions, setPositions] = useState([]);
+  const [votedPositionIds, setVotedPositionIds] = useState([]);
   const [expandedId, setExpandedId] = useState(null);
   const [candidatesByPos, setCandidatesByPos] = useState({});
   const [loadingCandidates, setLoadingCandidates] = useState({});
 
   useEffect(() => {
-    api.get('/positions')
-      .then(res => {
-        if (res.data?.success) {
-          const all = res.data.data || [];
-          setPositions(all);
-        }
+    Promise.all([
+      api.get('/positions'),
+      api.get('/votes/my'),
+    ]).then(([posRes, votesRes]) => {
+        if (posRes.data?.success) setPositions(posRes.data.data || []);
+        const myVotes = Array.isArray(votesRes.data) ? votesRes.data : [];
+        setVotedPositionIds(myVotes.map(v => v.position_id).filter(Boolean));
       })
       .catch(err => console.error("Erreur chargement des postes", err))
       .finally(() => setLoading(false));
@@ -105,9 +107,16 @@ const ElecteurScrutins = () => {
                     </div>
 
                     <div className="flex-1 min-w-0 cursor-pointer" onClick={() => toggleCandidates(pos.id)}>
-                      <h3 className="font-[900] text-slate-900 text-sm md:text-base leading-tight break-words">
-                        {pos.title}
-                      </h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-[900] text-slate-900 text-sm md:text-base leading-tight break-words">
+                          {pos.title}
+                        </h3>
+                        {votedPositionIds.includes(pos.id) && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-[8px] font-black bg-emerald-50 text-emerald-600 border border-emerald-100 shrink-0">
+                            <CheckCircle2 size={9} /> Voté
+                          </span>
+                        )}
+                      </div>
                       {pos.description && (
                         <p className="text-[10px] text-slate-400 font-medium mt-0.5 break-words">{pos.description}</p>
                       )}

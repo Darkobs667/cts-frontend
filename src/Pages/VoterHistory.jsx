@@ -210,13 +210,22 @@ const VoterHistory = () => {
                   <AnimatedNumber value={votes.length} />
                 </span>
                 <p className="text-[8px] font-black text-slate-300 mt-1 tracking-widest uppercase">
-                  Actions
+                  Votes
                 </p>
               </div>
               <div className="w-10 h-10 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-500">
                 <History size={20} />
               </div>
             </div>
+
+            <button
+              onClick={() => fetchHistory(true)}
+              disabled={isSyncing}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-slate-100 bg-white text-slate-400 font-black text-[10px] hover:bg-slate-50 transition-all disabled:opacity-50 self-start md:self-auto"
+            >
+              <RefreshCw size={13} className={isSyncing ? 'animate-spin' : ''} />
+              Actualiser
+            </button>
           </div>
 
           {/* ── list ── */}

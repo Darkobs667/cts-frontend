@@ -2,18 +2,8 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../Components/AdminLayout';
 import Toast from '../Components/Toast';
 import {
-  UserPlus,
-  Search,
-  MoreVertical,
-  ShieldCheck,
-  ShieldAlert,
-  Loader2,
-  Trash2,
-  Link2,
-  X,
-  Check,
-  UserCheck,
-  KeyRound,
+  UserPlus, Search, MoreVertical, ShieldCheck, ShieldAlert,
+  Loader2, Trash2, Link2, X, Check, UserCheck, KeyRound, AlertTriangle,
 } from 'lucide-react';
 import AddElectorModal from '../Components/AddElectorModal';
 import { electeurService } from '../services/electeurService';
@@ -26,6 +16,8 @@ const Electeurs = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState('Tous les statuts');
   const [resetModal, setResetModal] = useState({ open: false, password: '', nom: '' });
+  const [deleteModal, setDeleteModal] = useState({ open: false, id: null, nom: '' });
+  const [resetConfirmModal, setResetConfirmModal] = useState({ open: false, id: null, nom: '' });
   const [toast, setToast] = useState(null);
 
   // États pour l'association à un scrutin
@@ -79,49 +71,44 @@ const Electeurs = () => {
 
   // Suppression d'un électeur
   const handleDelete = async (id) => {
-    if (window.confirm('Voulez-vous vraiment supprimer cet électeur ?')) {
-      try {
-        await electeurService.delete(id);
-        setElecteurs(electeurs.filter((e) => e.id !== id));
-        setToast({ message: 'Électeur supprimé', type: 'success' });
-      } catch (error) {
-        setToast({ message: 'Erreur lors de la suppression', type: 'error' });
-      }
+    try {
+      await electeurService.delete(id);
+      setElecteurs(electeurs.filter((e) => e.id !== id));
+      setToast({ message: 'Électeur supprimé', type: 'success' });
+    } catch (error) {
+      setToast({ message: 'Erreur lors de la suppression', type: 'error' });
+    } finally {
+      setDeleteModal({ open: false, id: null, nom: '' });
     }
   };
 
-  // Réinitialisation du mot de passe
-  const handleResetPassword = async (userId, nom) => {
-    if (window.confirm('Réinitialiser le mot de passe de cet utilisateur ?')) {
-      try {
-        const response = await api.put(`/users/${userId}/reset-password`);
-        setResetModal({ open: true, password: response.data.new_password, nom });
-      } catch (error) {
-        setToast({ message: 'Erreur lors de la réinitialisation.', type: 'error' });
-      }
+  const handleResetPassword = async (userId) => {
+    try {
+      const response = await api.put(`/users/${userId}/reset-password`);
+      setResetModal({ open: true, password: response.data.new_password, nom: resetConfirmModal.nom });
+    } catch (error) {
+      setToast({ message: 'Erreur lors de la réinitialisation.', type: 'error' });
+    } finally {
+      setResetConfirmModal({ open: false, id: null, nom: '' });
     }
   };
 
   // Association de plusieurs utilisateurs à un poste
   const handleAssociate = async () => {
     if (!selectedPosition || selectedUsers.length === 0) {
-      alert('Veuillez sélectionner un poste et au moins un électeur.');
+      setToast({ message: 'Sélectionnez un poste et au moins un électeur.', type: 'error' });
       return;
     }
     try {
-      for (const userId of selectedUsers) {
-        await api.post('/candidates', {
-          user_id: userId,
-          position_id: selectedPosition,
-        });
-      }
+      await Promise.all(selectedUsers.map(userId =>
+        api.post('/candidates', { user_id: userId, position_id: selectedPosition })
+      ));
       setToast({ message: `${selectedUsers.length} électeur(s) associé(s) avec succès.`, type: 'success' });
       setShowAssociateModal(false);
       setSelectedPosition('');
       setSelectedUsers([]);
       setAssociateSearch('');
     } catch (error) {
-      console.error(error);
       setToast({ message: "Erreur lors de l'association.", type: 'error' });
     }
   };
@@ -146,6 +133,61 @@ const Electeurs = () => {
   return (
     <AdminLayout>
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
+      {/* Modale confirmation suppression */}
+      {deleteModal.open && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-red-50 flex items-center justify-center shrink-0">
+                <AlertTriangle size={18} className="text-red-500" />
+              </div>
+              <div>
+                <p className="text-sm font-black text-slate-900">Supprimer l'électeur ?</p>
+                <p className="text-[10px] text-slate-400 font-medium">{deleteModal.nom}</p>
+              </div>
+            </div>
+            <p className="text-xs text-slate-500">Cette action supprimera aussi ses votes et candidatures. Elle est irréversible.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteModal({ open: false, id: null, nom: '' })}
+                className="flex-1 py-3 font-black text-slate-400 text-xs hover:text-slate-600 transition-colors border border-slate-100 rounded-2xl">
+                Annuler
+              </button>
+              <button onClick={() => handleDelete(deleteModal.id)}
+                className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-black text-xs transition-all">
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modale confirmation reset password */}
+      {resetConfirmModal.open && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0">
+                <KeyRound size={18} className="text-blue-500" />
+              </div>
+              <div>
+                <p className="text-sm font-black text-slate-900">Réinitialiser le mot de passe ?</p>
+                <p className="text-[10px] text-slate-400 font-medium">{resetConfirmModal.nom}</p>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setResetConfirmModal({ open: false, id: null, nom: '' })}
+                className="flex-1 py-3 font-black text-slate-400 text-xs hover:text-slate-600 transition-colors border border-slate-100 rounded-2xl">
+                Annuler
+              </button>
+              <button onClick={() => handleResetPassword(resetConfirmModal.id)}
+                className="flex-1 py-3 bg-blue-500 hover:bg-blue-600 text-white rounded-2xl font-black text-xs transition-all">
+                Réinitialiser
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Modal Ajouter un électeur */}
       {showAddModal && (
         <AddElectorModal
@@ -405,7 +447,7 @@ const Electeurs = () => {
                         <div className="flex justify-end gap-2">
                           {/* Réinitialiser le mot de passe */}
                           <button
-                            onClick={() => handleResetPassword(user.id, user.nom)}
+                            onClick={() => setResetConfirmModal({ open: true, id: user.id, nom: user.nom })}
                             className="p-2.5 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-all"
                             title="Réinitialiser le mot de passe"
                           >
@@ -413,7 +455,7 @@ const Electeurs = () => {
                           </button>
                           {/* Supprimer */}
                           <button
-                            onClick={() => handleDelete(user.id)}
+                            onClick={() => setDeleteModal({ open: true, id: user.id, nom: user.nom })}
                             className="p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                           >
                             <Trash2 size={18} />

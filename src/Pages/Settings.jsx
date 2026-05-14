@@ -2,15 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../Components/AdminLayout';
 import Toast from '../Components/Toast';
 import {
-  Plus,
-  Trash2,
-  Edit3,
-  Camera,
-  Loader2,
-  X,
-  CheckCircle2,
-  Save,
-  Quote,
+  Plus, Trash2, Edit3, Camera, Loader2, X, CheckCircle2, Save, Quote, AlertTriangle,
 } from 'lucide-react';
 import candidateService from '../services/candidateService';
 import api from '../services/api'; // on garde api uniquement pour récupérer users et positions
@@ -34,6 +26,8 @@ const Candidats = () => {
   });
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
+  const [deleteModal, setDeleteModal] = useState({ open: false, id: null });
+  const [formError, setFormError] = useState('');
 
   const fetchCandidats = async () => {
     try {
@@ -120,8 +114,10 @@ const Candidats = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.user_id || !form.position_id) {
-      return alert('Veuillez sélectionner un électeur et un poste.');
+      setFormError('Veuillez sélectionner un électeur et un poste.');
+      return;
     }
+    setFormError('');
 
     const payload = new FormData();
     payload.append('user_id', form.user_id);
@@ -152,14 +148,14 @@ const Candidats = () => {
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm('Supprimer ce candidat ?')) {
-      try {
-        await candidateService.delete(id);
-        setCandidats((prev) => prev.filter((c) => c.id !== id));
-        setToast({ message: 'Candidat supprimé', type: 'success' });
-      } catch (error) {
-        setToast({ message: 'Erreur lors de la suppression', type: 'error' });
-      }
+    try {
+      await candidateService.delete(id);
+      setCandidats((prev) => prev.filter((c) => c.id !== id));
+      setToast({ message: 'Candidat supprimé', type: 'success' });
+    } catch (error) {
+      setToast({ message: 'Erreur lors de la suppression', type: 'error' });
+    } finally {
+      setDeleteModal({ open: false, id: null });
     }
   };
 
@@ -167,6 +163,31 @@ const Candidats = () => {
   return (
     <AdminLayout activePage="candidats">
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+
+      {/* Modale confirmation suppression candidat */}
+      {deleteModal.open && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-red-50 flex items-center justify-center shrink-0">
+                <AlertTriangle size={18} className="text-red-500" />
+              </div>
+              <p className="text-sm font-black text-slate-900">Supprimer ce candidat ?</p>
+            </div>
+            <p className="text-xs text-slate-500">Cette action est irréversible.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteModal({ open: false, id: null })}
+                className="flex-1 py-3 font-black text-slate-400 text-xs border border-slate-100 rounded-2xl hover:text-slate-600 transition-colors">
+                Annuler
+              </button>
+              <button onClick={() => handleDelete(deleteModal.id)}
+                className="flex-1 py-3 bg-red-500 hover:bg-red-600 text-white rounded-2xl font-black text-xs transition-all">
+                Supprimer
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Modale d'ajout / modification */}
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
@@ -190,6 +211,11 @@ const Candidats = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="p-8 overflow-y-auto custom-scrollbar flex flex-col gap-8">
+              {formError && (
+                <div className="bg-red-50 border border-red-100 text-red-500 text-xs font-bold rounded-2xl px-4 py-3">
+                  {formError}
+                </div>
+              )}
               {/* Sélection utilisateur */}
               <div>
                 <label className="text-[10px] font-black text-slate-400 ml-2 mb-3 block">Électeur</label>
@@ -416,7 +442,7 @@ const Candidats = () => {
                             <Edit3 size={18} />
                           </button>
                           <button
-                            onClick={() => handleDelete(candidat.id)}
+                            onClick={() => setDeleteModal({ open: true, id: candidat.id })}
                             className="p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                           >
                             <Trash2 size={18} />

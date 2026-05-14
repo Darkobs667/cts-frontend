@@ -403,7 +403,10 @@ const AdminresultsPage = () => {
   useEffect(() => {
     fetchStats();
     fetchAllResults();
-    const interval = setInterval(fetchAllResults, 10000);
+
+    const interval = setInterval(() => {
+      if (!document.hidden) fetchAllResults();
+    }, 10000);
     return () => clearInterval(interval);
   }, []);
 

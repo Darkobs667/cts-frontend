@@ -1,80 +1,122 @@
 import React, { useState, useEffect } from 'react';
 import VoterLayout from "../Components/VoterLayout";
 import { useNavigate } from "react-router";
-import { Vote, ArrowRight, ShieldCheck, Zap, CheckCircle2, Clock } from 'lucide-react';
+import { Vote, ArrowRight, ShieldCheck, Zap, CheckCircle2, Clock, Timer } from 'lucide-react';
 import { getConnectedUser } from '../utils/userHelper';
 import api from '../services/api';
 
-const ElectionRow = ({ election, index, onVote, alreadyVoted }) => {
-  const isActive = election.type === 'active';
+/* ── Countdown temps réel ── */
+const Countdown = ({ closesAt }) => {
+  const calc = () => {
+    const diff = new Date(closesAt) - new Date();
+    if (diff <= 0) return null;
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    return { h, m, s, urgent: diff < 3600000 };
+  };
+  const [time, setTime] = useState(calc);
+
+  useEffect(() => {
+    const t = setInterval(() => setTime(calc()), 1000);
+    return () => clearInterval(t);
+  }, [closesAt]);
+
+  if (!time) return <span className="text-[9px] font-black text-slate-300">Clôturé</span>;
 
   return (
-    <div
-      className="group relative flex flex-col md:grid md:grid-cols-4 gap-4 md:items-center
-        p-5 md:px-7 md:py-6 rounded-2xl border border-transparent
-        hover:bg-emerald-50/40 hover:border-emerald-100 transition-all duration-200 fade-up"
-      style={{ animationDelay: `${index * 70}ms` }}
-    >
-      <span className="absolute left-0 top-3 bottom-3 w-0.5 rounded-r-full bg-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+    <span className={`inline-flex items-center gap-1 text-[9px] font-black ${time.urgent ? 'text-red-500' : 'text-slate-400'}`}>
+      <Timer size={9} className={time.urgent ? 'text-red-400' : 'text-slate-300'} />
+      {time.h > 0 && `${time.h}h `}{String(time.m).padStart(2,'0')}m {String(time.s).padStart(2,'0')}s
+    </span>
+  );
+};
 
-      {/* title */}
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
-          <Vote size={13} className={isActive ? 'text-emerald-500' : 'text-slate-300'} />
-        </div>
-        <span className="font-black text-slate-800 text-sm leading-tight">{election.titre}</span>
+/* ── Barre de progression ── */
+const ProgressBar = ({ value, total }) => {
+  const pct = total > 0 ? Math.round((value / total) * 100) : 0;
+  return (
+    <div className="w-full">
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[9px] font-black text-slate-400 tracking-widest uppercase">Progression de vote</span>
+        <span className="text-[9px] font-black text-emerald-600">{value}/{total} scrutins</span>
       </div>
-
-      {/* date */}
-      <div>
-        <span className="md:hidden text-[9px] font-black text-slate-300 mb-1 block">Date</span>
-        <span className="text-slate-400 text-xs font-bold italic">{election.date}</span>
+      <div className="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+        <div
+          className="h-full bg-gradient-to-r from-emerald-400 to-emerald-600 rounded-full transition-all duration-1000 ease-out"
+          style={{ width: `${pct}%` }}
+        />
       </div>
-
-      {/* status */}
-      <div className="flex md:justify-center">
-        {isActive ? (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[9px] font-black bg-emerald-50 text-emerald-600 border border-emerald-100">
-            <span className="relative flex h-1.5 w-1.5">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
-            </span>
-            En Cours
-          </span>
-        ) : (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[9px] font-black bg-amber-50 text-amber-500 border border-amber-100">
-            <Clock size={9} />
-            Terminé
-          </span>
-        )}
-      </div>
-
-      {/* action */}
-      <div className="md:text-right">
-        {isActive ? (
-          alreadyVoted ? (
-            <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl text-[10px] font-black bg-slate-50 text-slate-400 border border-slate-100">
-              <CheckCircle2 size={12} className="text-emerald-400" />
-              Déjà voté
-            </span>
-          ) : (
-            <button
-              onClick={() => onVote(election)}
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600
-                text-white rounded-2xl text-[10px] font-black shadow-sm shadow-emerald-100
-                active:scale-95 transition-all duration-200"
-            >
-              Voter maintenant
-              <ArrowRight size={13} />
-            </button>
-          )
-        ) : (
-          <span className="text-slate-300 text-[10px] font-black">Clôturé</span>
-        )}
-      </div>
+      <p className="text-[9px] font-bold text-slate-400 mt-1.5 text-right">
+        {pct === 100 ? '✓ Tous les scrutins complétés !' : `${pct}% accompli`}
+      </p>
     </div>
   );
 };
+
+/* ── Ligne scrutin ── */
+const ElectionRow = ({ election, index, onVote, alreadyVoted }) => (
+  <div
+    className="group relative flex flex-col md:grid md:grid-cols-4 gap-4 md:items-center
+      p-5 md:px-7 md:py-6 rounded-2xl border border-transparent
+      hover:bg-emerald-50/40 hover:border-emerald-100 transition-all duration-200 fade-up"
+    style={{ animationDelay: `${index * 70}ms` }}
+  >
+    <span className="absolute left-0 top-3 bottom-3 w-0.5 rounded-r-full bg-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
+
+    {/* title */}
+    <div className="flex items-center gap-3">
+      <div className="w-8 h-8 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
+        <Vote size={13} className={alreadyVoted ? 'text-emerald-500' : 'text-slate-300'} />
+      </div>
+      <div className="min-w-0">
+        <span className="font-black text-slate-800 text-sm leading-tight block truncate">{election.titre}</span>
+        {alreadyVoted && (
+          <span className="text-[8px] font-black text-emerald-500 tracking-wide">✓ Participation enregistrée</span>
+        )}
+      </div>
+    </div>
+
+    {/* countdown */}
+    <div>
+      <span className="md:hidden text-[9px] font-black text-slate-300 mb-1 block">Clôture</span>
+      {election.closesAt ? <Countdown closesAt={election.closesAt} /> : (
+        <span className="text-slate-400 text-xs font-bold italic">{election.date}</span>
+      )}
+    </div>
+
+    {/* status */}
+    <div className="flex md:justify-center">
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[9px] font-black bg-emerald-50 text-emerald-600 border border-emerald-100">
+        <span className="relative flex h-1.5 w-1.5">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
+        </span>
+        En Cours
+      </span>
+    </div>
+
+    {/* action */}
+    <div className="md:text-right">
+      {alreadyVoted ? (
+        <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl text-[10px] font-black bg-emerald-50 text-emerald-600 border border-emerald-100">
+          <CheckCircle2 size={12} />
+          Voté
+        </span>
+      ) : (
+        <button
+          onClick={() => onVote(election)}
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600
+            text-white rounded-2xl text-[10px] font-black shadow-sm shadow-emerald-100
+            active:scale-95 transition-all duration-200"
+        >
+          Voter maintenant
+          <ArrowRight size={13} />
+        </button>
+      )}
+    </div>
+  </div>
+);
 
 const VoterDashboard = () => {
   const navigate = useNavigate();
@@ -98,6 +140,7 @@ const VoterDashboard = () => {
             .map(pos => ({
               id: pos.id,
               titre: pos.title,
+              closesAt: pos.closes_at || null,
               date: pos.closes_at
                 ? new Date(pos.closes_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
                 : 'Date inconnue',
@@ -117,12 +160,8 @@ const VoterDashboard = () => {
     fetchData();
   }, []);
 
-  const handleStartVote = (election) => {
-    navigate('/voterChoice', { state: { election } });
-  };
-
   const totalScrutins = elections.length;
-  const votesEffectues = votedPositionIds.length;
+  const votesEffectues = votedPositionIds.filter(id => elections.some(e => e.id === id)).length;
   const resteAVoter = Math.max(0, totalScrutins - votesEffectues);
 
   return (
@@ -149,50 +188,50 @@ const VoterDashboard = () => {
         <div className="animate-in fade-in duration-500">
 
           {/* header */}
-          <div className="mb-10 fade-up">
-            <h1 className="text-xl md:text-2xl font-[900] text-slate-900">
-              Tableau de bord électeur
-            </h1>
+          <div className="mb-8 fade-up">
+            <h1 className="text-xl md:text-2xl font-[900] text-slate-900">Tableau de bord</h1>
             <p className="text-slate-400 font-medium mt-1 text-xs">
-              Bienvenue{' '}
-              <span className="font-black text-slate-600">{user?.fullName || 'Utilisateur'}</span>
-              {' '}dans votre espace de vote sécurisé
+              Bienvenue <span className="font-black text-slate-600">{user?.fullName || 'Utilisateur'}</span>
             </p>
           </div>
 
-          {/* stat cards — données pertinentes pour l'électeur */}
+          {/* barre de progression globale */}
+          {totalScrutins > 0 && (
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 mb-6 fade-up" style={{ animationDelay: '40ms' }}>
+              <ProgressBar value={votesEffectues} total={totalScrutins} />
+            </div>
+          )}
+
+          {/* stat cards */}
           <div className="grid grid-cols-3 gap-4 mb-8">
             {[
-              { label: 'Scrutins ouverts',   value: totalScrutins,  accent: 'bg-emerald-500 shadow-lg shadow-emerald-100', delay: '0ms'   },
-              { label: 'Votes effectués',     value: votesEffectues, accent: 'bg-blue-500 shadow-lg shadow-blue-100',       delay: '60ms'  },
-              { label: 'Reste à voter',       value: resteAVoter,    accent: resteAVoter > 0 ? 'bg-amber-500 shadow-lg shadow-amber-100' : 'bg-slate-400', delay: '120ms' },
+              { label: 'Scrutins ouverts', value: totalScrutins,  accent: 'bg-emerald-500 shadow-lg shadow-emerald-100', delay: '60ms'  },
+              { label: 'Votes effectués',  value: votesEffectues, accent: 'bg-blue-500 shadow-lg shadow-blue-100',       delay: '120ms' },
+              { label: 'Reste à voter',    value: resteAVoter,    accent: resteAVoter > 0 ? 'bg-amber-500 shadow-lg shadow-amber-100' : 'bg-slate-300', delay: '180ms' },
             ].map((s, i) => (
               <div
                 key={i}
-                className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 flex items-center gap-4 fade-up hover:shadow-md transition-all duration-300"
+                className="bg-white rounded-3xl border border-slate-100 shadow-sm p-5 flex items-center gap-4 fade-up hover:shadow-md transition-all duration-300"
                 style={{ animationDelay: s.delay }}
               >
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${s.accent}`}>
-                  <Vote size={20} className="text-white" />
+                <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 ${s.accent}`}>
+                  <Vote size={18} className="text-white" />
                 </div>
                 <div className="min-w-0">
-                  <p className="text-[9px] font-black text-slate-400 tracking-widest uppercase mb-1">{s.label}</p>
+                  <p className="text-[9px] font-black text-slate-400 tracking-widest uppercase mb-1 leading-none">{s.label}</p>
                   <p className="text-2xl font-[900] text-slate-900 leading-none tabular-nums">{s.value}</p>
                 </div>
               </div>
             ))}
           </div>
 
-          {/* elections table */}
-          <div
-            className="bg-white rounded-[36px] border border-slate-100 shadow-sm overflow-hidden fade-up"
-            style={{ animationDelay: '180ms' }}
-          >
+          {/* liste scrutins */}
+          <div className="bg-white rounded-[36px] border border-slate-100 shadow-sm overflow-hidden fade-up" style={{ animationDelay: '200ms' }}>
             <div className="px-7 py-6 border-b border-slate-50 flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-[900] text-slate-900">Scrutins disponibles</h2>
                 <p className="text-[9px] font-bold text-slate-400 mt-0.5">
-                  {totalScrutins} scrutin{totalScrutins !== 1 ? 's' : ''} ouvert{totalScrutins !== 1 ? 's' : ''}
+                  {resteAVoter > 0 ? `${resteAVoter} scrutin${resteAVoter > 1 ? 's' : ''} en attente de votre vote` : 'Tous les scrutins complétés'}
                 </p>
               </div>
               {totalScrutins > 0 && (
@@ -205,7 +244,7 @@ const VoterDashboard = () => {
 
             <div className="hidden md:grid grid-cols-4 px-7 py-4 text-[9px] font-black text-slate-300 uppercase border-b border-slate-50">
               <div>Poste à pourvoir</div>
-              <div>Date de clôture</div>
+              <div>Clôture dans</div>
               <div>Statut</div>
               <div className="text-right">Action</div>
             </div>
@@ -225,7 +264,7 @@ const VoterDashboard = () => {
                     key={election.id}
                     election={election}
                     index={i}
-                    onVote={handleStartVote}
+                    onVote={(el) => navigate('/voterChoice', { state: { election: el } })}
                     alreadyVoted={votedPositionIds.includes(election.id)}
                   />
                 ))

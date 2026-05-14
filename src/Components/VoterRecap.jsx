@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import VoterLayout from "../Components/VoterLayout";
+import Toast from '../Components/Toast';
 import { useLocation, useNavigate } from "react-router";
 import { ShieldCheck, ArrowLeft, Send, CheckCircle, User, ShieldAlert, Lock } from 'lucide-react';
 import api from '../services/api';
@@ -10,6 +11,7 @@ const VoterRecap = () => {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [voteRef, setVoteRef] = useState('');
+  const [toast, setToast] = useState(null);
 
   const { election, selectedCandidate } = location.state || {};
 
@@ -42,7 +44,7 @@ const VoterRecap = () => {
       setIsSubmitted(true);
     } catch (error) {
       const message = error.response?.data?.message || "Erreur lors de l'enregistrement du vote.";
-      alert(message);
+      setToast({ message, type: 'error' });
     } finally {
       setLoading(false);
     }
@@ -66,6 +68,7 @@ const VoterRecap = () => {
         .zoom-in { animation: zoomIn .5s cubic-bezier(.34,1.56,.64,1) both; }
       `}</style>
 
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       <div className="max-w-xl mx-auto pb-20">
 
         {/* ── pre-submit view ── */}

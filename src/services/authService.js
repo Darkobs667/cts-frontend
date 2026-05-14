@@ -56,7 +56,8 @@ const authService = {
 },
 
     // Optionnel : Fonction de déconnexion pour nettoyer le localStorage
-    logout: () => {
+    logout: async () => {
+        try { await api.post('/logout'); } catch (_) {}
         localStorage.removeItem('user_token');
         localStorage.removeItem('user_data');
         localStorage.removeItem('token');

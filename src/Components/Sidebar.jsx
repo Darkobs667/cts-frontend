@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────
 // Sidebar.jsx
 // ─────────────────────────────────────────────────────────────
-import { LayoutDashboard, Users, Vote, ExternalLink, LogOut, ChartPie, MailOpen, KeyRound, X } from 'lucide-react';
+import { LayoutDashboard, Users, Vote, ExternalLink, LogOut, ChartPie, KeyRound, X } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import Logocts from "../assets/logo-cts2-removebg-preview.png";
 import { useState } from 'react';
@@ -36,8 +36,17 @@ const Sidebar = ({ isOpen, toggle, activePage }) => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsLoggingOut(true);
+    try {
+      const token = localStorage.getItem('user_token');
+      if (token) {
+        await fetch(`${import.meta.env.VITE_API_URL}/logout`, {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${token}` },
+        });
+      }
+    } catch (_) {}
     setTimeout(() => {
       localStorage.clear();
       sessionStorage.clear();
@@ -50,7 +59,6 @@ const Sidebar = ({ isOpen, toggle, activePage }) => {
     { id: 'electeurs',        label: 'Électeurs',                 icon: Users,           to: '/electeurs'        },
     { id: 'votes',            label: 'Scrutins ou postes',        icon: Vote,            to: '/votes-elections'  },
     { id: 'parametres',       label: 'Candidats & scrutins',      icon: ExternalLink,    to: '/candidats'        },
-    { id: 'candidatures',     label: 'Gestions des candidatures', icon: MailOpen,        to: '/candidatures'     },
     { id: 'adminresultsPage', label: 'Résultats',                 icon: ChartPie,        to: '/adminresultsPage' },
     { id: 'invite-codes',     label: 'Codes d\'invitation',       icon: KeyRound,        to: '/invite-codes'     },
   ];

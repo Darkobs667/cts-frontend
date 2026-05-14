@@ -32,12 +32,6 @@ const SignUp = () => {
 
     const validateField = (name, value) => {
         let errorMsg = '';
-        if (name === 'email') {
-            const uadbRegex = /^[^\s@]+@uadb\.edu\.sn$/;
-            if (value && !uadbRegex.test(value)) {
-                errorMsg = "Seules les adresses @uadb.edu.sn sont autorisées.";
-            }
-        }
         if (name === 'password') {
             if (value && value.length < 8) {
                 errorMsg = "Le mot de passe doit contenir au moins 8 caractères.";
@@ -77,7 +71,7 @@ const SignUp = () => {
                 return;
             }
 
-            navigate('/verify-pending');
+            navigate('/verify-pending', { state: { email: formData.email } });
         } catch (err) {
             let message = "Erreur de connexion au serveur.";
             if (err?.error) message = err.error;
@@ -140,7 +134,7 @@ const SignUp = () => {
                     </div>
 
                     <div className="form-control w-full">
-                        <label className="label py-0 mb-2 text-xs font-semibold text-slate-900">Email Académique</label>
+                        <label className="label py-0 mb-2 text-xs font-semibold text-slate-900">Email</label>
                         <div className="relative group">
                             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-500 transition-colors z-10">
                                 <MailQuestionMark size={18} />
@@ -150,7 +144,7 @@ const SignUp = () => {
                                 value={formData.email}
                                 onChange={handleChange}
                                 type="email"
-                                placeholder="prenom.nom@uadb.edu.sn"
+                                placeholder="exemple@email.com"
                                 className="input w-full h-14 pl-12 bg-slate-50 border-none focus:ring-2 focus:ring-emerald-400 rounded-2xl text-slate-700 transition-all font-medium"
                                 required
                             />

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../Components/AdminLayout';
+import Toast from '../Components/Toast';
 import {
   Plus,
   Trash2,
@@ -32,6 +33,7 @@ const Candidats = () => {
     preview: null,
   });
   const [saving, setSaving] = useState(false);
+  const [toast, setToast] = useState(null);
 
   const fetchCandidats = async () => {
     try {
@@ -137,13 +139,13 @@ const Candidats = () => {
       } else {
         await candidateService.create(payload);
       }
-      alert(editingCandidate ? 'Candidat modifié avec succès' : 'Candidat ajouté avec succès');
+      setToast({ message: editingCandidate ? 'Candidat modifié avec succès' : 'Candidat ajouté avec succès', type: 'success' });
       setShowModal(false);
       resetForm();
       fetchCandidats();
     } catch (error) {
       console.error(error);
-      alert("Erreur lors de l'enregistrement.");
+      setToast({ message: "Erreur lors de l'enregistrement.", type: 'error' });
     } finally {
       setSaving(false);
     }
@@ -154,8 +156,9 @@ const Candidats = () => {
       try {
         await candidateService.delete(id);
         setCandidats((prev) => prev.filter((c) => c.id !== id));
+        setToast({ message: 'Candidat supprimé', type: 'success' });
       } catch (error) {
-        alert('Erreur lors de la suppression',error);
+        setToast({ message: 'Erreur lors de la suppression', type: 'error' });
       }
     }
   };
@@ -163,6 +166,7 @@ const Candidats = () => {
 
   return (
     <AdminLayout activePage="candidats">
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       {/* Modale d'ajout / modification */}
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
@@ -369,7 +373,7 @@ const Candidats = () => {
                             />
                           ) : candidat.user?.photo ? (
                             <img
-                              src={`${import.meta.env.VITE_STORAGE_URL}/${candidat.photo_path}`}
+                              src={`${import.meta.env.VITE_STORAGE_URL}/${candidat.user.photo}`}
                               alt={candidat.user?.nom}
                               className="w-full h-full object-cover"
                             />

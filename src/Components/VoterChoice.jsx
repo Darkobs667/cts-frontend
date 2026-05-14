@@ -9,25 +9,10 @@ const VoterChoice = () => {
   const [selected, setSelected] = useState(null);
   const [candidates, setCandidates] = useState([]);
   const [loadingCandidates, setLoadingCandidates] = useState(true);
-  const [liveResults, setLiveResults] = useState({});
 
   const election = location.state?.election || {
     titre: "Scrutin inconnu",
     id: null,
-  };
-
-  const fetchResults = async () => {
-    if (!election.id) return;
-    try {
-      const res = await api.get('/votes/results', { params: { position_id: election.id } });
-      const data = res.data?.data || [];
-      const pos = Array.isArray(data) ? data.find(p => p.id === election.id) : data;
-      if (pos?.candidates) {
-        const map = {};
-        pos.candidates.forEach(c => { map[c.id] = { pct: c.percentage ?? 0, votes: c.votes_count ?? 0 }; });
-        setLiveResults(map);
-      }
-    } catch {}
   };
 
   useEffect(() => {
@@ -57,9 +42,6 @@ const VoterChoice = () => {
       }
     };
     fetchCandidates();
-    fetchResults();
-    const interval = setInterval(fetchResults, 15000);
-    return () => clearInterval(interval);
   }, [election.id]);
 
   return (
@@ -189,24 +171,6 @@ const VoterChoice = () => {
                             {c.slogan}
                           </p>
                         </div>
-
-                        {/* live % bar */}
-                        {liveResults[c.id] !== undefined && (
-                          <div className="mt-2">
-                            <div className="flex justify-between items-center mb-1">
-                              <span className="text-[9px] font-black text-slate-400">Votes en cours</span>
-                              <span className={`text-[10px] font-black ${isSelected ? 'text-emerald-600' : 'text-slate-500'}`}>
-                                {liveResults[c.id].pct}%
-                              </span>
-                            </div>
-                            <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full rounded-full transition-all duration-1000 ${isSelected ? 'bg-emerald-400' : 'bg-slate-300'}`}
-                                style={{ width: `${liveResults[c.id].pct}%` }}
-                              />
-                            </div>
-                          </div>
-                        )}
                       </div>
                     </div>
                   </div>

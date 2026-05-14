@@ -133,7 +133,8 @@ const VoterHistory = () => {
       if (showSync) setIsSyncing(true);
       else setLoading(true);
       const response = await api.get('/votes/my');
-      setVotes(response.data);
+      const data = response.data;
+      setVotes(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error("Erreur historique :", error);
     } finally {

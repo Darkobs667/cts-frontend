@@ -13,6 +13,7 @@ import VoterProfile from './Pages/VoterProfile.jsx';
 import AdminresultsPage from './Pages/adminresult.jsx';
 import ProtectedRoute from "./Components/ProtectedRoute.jsx";
 import ElecteurScrutins from "./Pages/ElecteurScrutins.jsx";
+import VoterResults from './Pages/VoterResults.jsx';
 import InviteCodes from './Pages/InviteCodes.jsx';
 import VerifyPending from './Pages/VerifyPending.jsx';
 import VerifyEmail from './Pages/VerifyEmail.jsx';
@@ -57,6 +58,11 @@ function App() {
        <Route path="/scrutins" element={
         <ProtectedRoute allowedRole="electeur">
           <ElecteurScrutins />
+        </ProtectedRoute>
+      } />
+      <Route path="/voter-results" element={
+        <ProtectedRoute allowedRole="electeur">
+          <VoterResults />
         </ProtectedRoute>
       } />
       

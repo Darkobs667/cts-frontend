@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import Logocts from "../assets/logo-cts2-removebg-preview.png";
-import { LayoutDashboard, CheckCircle, User, LogOut, Menu, X, Vote, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, CheckCircle, User, LogOut, Menu, X, Vote, ShieldAlert, TrendingUp } from 'lucide-react';
 import { getConnectedUser } from '../utils/userHelper';
 import api from '../services/api';
 
@@ -47,6 +47,7 @@ const VoterLayout = ({ children, activePage }) => {
     { id: 'dashboard',        label: 'Tableau de bord',               icon: LayoutDashboard, to: '/voterDashboard' },
     { id: 'scrtins & postes', label: 'Scrutins et postes disponibles', icon: Vote,            to: '/scrutins'      },
     { id: 'votes',            label: 'Mes Votes & Reçus',             icon: CheckCircle,     to: '/voterHistory'  },
+    { id: 'results',          label: 'Résultats',                     icon: TrendingUp,      to: '/voter-results' },
     { id: 'profile',          label: 'Profil',                        icon: User,            to: '/voterProfile'  },
   ];
 

@@ -110,9 +110,7 @@ const VoterDashboard = () => {
         }
 
         const myVotes = Array.isArray(myVotesRes.data) ? myVotesRes.data : [];
-        // on récupère les position_id depuis les votes — on les déduit du titre via un autre appel
-        // mais /votes/my retourne election_title pas position_id, donc on stocke les titres
-        setVotedPositionIds(myVotes.map(v => v.election_title));
+        setVotedPositionIds(myVotes.map(v => v.position_id).filter(Boolean));
       } catch (error) {
         console.error('Erreur chargement dashboard:', error);
       } finally {
@@ -231,7 +229,7 @@ const VoterDashboard = () => {
                     election={election}
                     index={i}
                     onVote={handleStartVote}
-                    alreadyVoted={votedPositionIds.includes(election.titre)}
+                    alreadyVoted={votedPositionIds.includes(election.id)}
                   />
                 ))
               )}

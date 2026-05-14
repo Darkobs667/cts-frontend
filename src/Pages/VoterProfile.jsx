@@ -133,7 +133,7 @@ const VoterProfile = () => {
               <div>
                 <p className="text-[11px] font-black text-slate-700">Sécurité du compte</p>
                 <p className="text-[10px] font-medium text-slate-400 mt-1 leading-relaxed">
-                  Votre compte est protégé par votre adresse institutionnelle <span className="font-black text-slate-600">@uadb.edu.sn</span> et votre mot de passe. En cas de problème d'accès, contactez un administrateur du club.
+                  Votre compte est protégé par votre adresse email et votre mot de passe. En cas de problème d'accès, contactez un administrateur du club.
                 </p>
               </div>
             </div>

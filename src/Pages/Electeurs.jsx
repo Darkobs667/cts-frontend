@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../Components/AdminLayout';
+import Toast from '../Components/Toast';
 import {
   UserPlus,
   Search,
@@ -25,6 +26,7 @@ const Electeurs = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState('Tous les statuts');
   const [resetModal, setResetModal] = useState({ open: false, password: '', nom: '' });
+  const [toast, setToast] = useState(null);
 
   // États pour l'association à un scrutin
   const [positions, setPositions] = useState([]);
@@ -69,8 +71,9 @@ const Electeurs = () => {
       const savedElector = await electeurService.create(newElectorData);
       setElecteurs([savedElector, ...electeurs]);
       setShowAddModal(false);
+      setToast({ message: 'Électeur ajouté avec succès', type: 'success' });
     } catch (error) {
-      alert("Erreur lors de l'ajout de l'électeur");
+      setToast({ message: "Erreur lors de l'ajout de l'électeur", type: 'error' });
     }
   };
 
@@ -80,8 +83,9 @@ const Electeurs = () => {
       try {
         await electeurService.delete(id);
         setElecteurs(electeurs.filter((e) => e.id !== id));
+        setToast({ message: 'Électeur supprimé', type: 'success' });
       } catch (error) {
-        alert('Erreur lors de la suppression');
+        setToast({ message: 'Erreur lors de la suppression', type: 'error' });
       }
     }
   };
@@ -93,7 +97,7 @@ const Electeurs = () => {
         const response = await api.put(`/users/${userId}/reset-password`);
         setResetModal({ open: true, password: response.data.new_password, nom });
       } catch (error) {
-        alert('Erreur lors de la réinitialisation.');
+        setToast({ message: 'Erreur lors de la réinitialisation.', type: 'error' });
       }
     }
   };
@@ -111,14 +115,14 @@ const Electeurs = () => {
           position_id: selectedPosition,
         });
       }
-      alert(`${selectedUsers.length} électeur(s) associé(s) avec succès.`);
+      setToast({ message: `${selectedUsers.length} électeur(s) associé(s) avec succès.`, type: 'success' });
       setShowAssociateModal(false);
       setSelectedPosition('');
       setSelectedUsers([]);
       setAssociateSearch('');
     } catch (error) {
       console.error(error);
-      alert("Erreur lors de l'association. Vérifiez les droits administrateur.");
+      setToast({ message: "Erreur lors de l'association.", type: 'error' });
     }
   };
 
@@ -141,6 +145,7 @@ const Electeurs = () => {
 
   return (
     <AdminLayout>
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
       {/* Modal Ajouter un électeur */}
       {showAddModal && (
         <AddElectorModal

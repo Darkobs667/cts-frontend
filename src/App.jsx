@@ -15,6 +15,8 @@ import ProtectedRoute from "./Components/ProtectedRoute.jsx";
 import ElecteurScrutins from "./Pages/ElecteurScrutins.jsx";
 import AdminCandidatures from "./Pages/AdminCandidatures.jsx";
 
+import InviteCodes from './Pages/InviteCodes.jsx';
+
 function App() {
   return (
     <Routes>
@@ -84,6 +86,11 @@ function App() {
       <Route path="/adminresultsPage" element={
         <ProtectedRoute allowedRole="admin">
           <AdminresultsPage />
+        </ProtectedRoute>
+      } />
+      <Route path="/invite-codes" element={
+        <ProtectedRoute allowedRole="admin">
+          <InviteCodes />
         </ProtectedRoute>
       } />
 

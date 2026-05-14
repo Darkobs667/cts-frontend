@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────
 // Sidebar.jsx
 // ─────────────────────────────────────────────────────────────
-import { LayoutDashboard, Users, Vote, ExternalLink, LogOut, ChartPie, MailOpen, X } from 'lucide-react';
+import { LayoutDashboard, Users, Vote, ExternalLink, LogOut, ChartPie, MailOpen, KeyRound, X } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import Logocts from "../assets/logo-cts2-removebg-preview.png";
 import { useState } from 'react';
@@ -46,12 +46,13 @@ const Sidebar = ({ isOpen, toggle, activePage }) => {
   };
 
   const adminMenuItems = [
-    { id: 'dashboard',        label: 'Tableau de bord',         icon: LayoutDashboard, to: '/admin'            },
-    { id: 'electeurs',        label: 'Électeurs',               icon: Users,           to: '/electeurs'        },
-    { id: 'votes',            label: 'Scrutins ou postes',      icon: Vote,            to: '/votes-elections'  },
-    { id: 'parametres',       label: 'Candidats & scrutins',    icon: ExternalLink,    to: '/candidats'        },
-    { id: 'candidatures',     label: 'Gestions des candidatures', icon: MailOpen,      to: '/candidatures'     },
-    { id: 'adminresultsPage', label: 'Résultats',               icon: ChartPie,        to: '/adminresultsPage' },
+    { id: 'dashboard',        label: 'Tableau de bord',           icon: LayoutDashboard, to: '/admin'            },
+    { id: 'electeurs',        label: 'Électeurs',                 icon: Users,           to: '/electeurs'        },
+    { id: 'votes',            label: 'Scrutins ou postes',        icon: Vote,            to: '/votes-elections'  },
+    { id: 'parametres',       label: 'Candidats & scrutins',      icon: ExternalLink,    to: '/candidats'        },
+    { id: 'candidatures',     label: 'Gestions des candidatures', icon: MailOpen,        to: '/candidatures'     },
+    { id: 'adminresultsPage', label: 'Résultats',                 icon: ChartPie,        to: '/adminresultsPage' },
+    { id: 'invite-codes',     label: 'Codes d\'invitation',       icon: KeyRound,        to: '/invite-codes'     },
   ];
 
   return (

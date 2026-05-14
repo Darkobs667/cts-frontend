@@ -9,6 +9,7 @@ const VoterRecap = () => {
   const navigate = useNavigate();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [voteRef, setVoteRef] = useState('');
 
   const { election, selectedCandidate } = location.state || {};
 
@@ -35,7 +36,9 @@ const VoterRecap = () => {
     try {
       const position_id = election.id;
       const candidate_id = selectedCandidate.id === 'blanc' ? null : selectedCandidate.id;
-      await api.post('/votes', { position_id, candidate_id });
+      const res = await api.post('/votes', { position_id, candidate_id });
+      const id = res.data?.data?.id || Date.now();
+      setVoteRef('CTS-' + id.toString(36).toUpperCase().padStart(8, '0'));
       setIsSubmitted(true);
     } catch (error) {
       const message = error.response?.data?.message || "Erreur lors de l'enregistrement du vote.";
@@ -248,7 +251,7 @@ const VoterRecap = () => {
                 </p>
                 <div className="bg-white rounded-xl border border-slate-200 px-4 py-3 font-mono
                   text-[11px] font-black text-slate-800 break-all shadow-inner">
-                  CTS-TX-{Math.random().toString(36).substring(2, 15).toUpperCase()}
+                  {voteRef}
                 </div>
                 <p className="text-[9px] font-bold text-slate-400 mt-3 text-center">
                   Un justificatif a été envoyé à votre adresse institutionnelle.

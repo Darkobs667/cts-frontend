@@ -27,7 +27,8 @@ const SignUp = () => {
         prenom: '',
         nom: '',
         email: '',
-        password: ''
+        password: '',
+        invite_code: ''
     });
 
     const [errors, setErrors] = useState({
@@ -71,7 +72,8 @@ const SignUp = () => {
         password: formData.password,
         password_confirmation: formData.password,
         code: null,
-        browserId: browserId
+        browserId: browserId,
+        invite_code: formData.invite_code
     };
 
     
@@ -133,6 +135,19 @@ const SignUp = () => {
                 )}
 
                 <form onSubmit={handleSubmit} className="space-y-5">
+                    <div className="form-control w-full">
+                        <label className="label py-0 mb-2 text-xs font-semibold text-slate-900">Code d'invitation</label>
+                        <input
+                            name="invite_code"
+                            value={formData.invite_code}
+                            onChange={handleChange}
+                            type="text"
+                            placeholder="Ex: AB12CD34"
+                            className="input w-full h-12 pl-4 bg-slate-50 border-none focus:ring-2 focus:ring-emerald-400 rounded-xl text-slate-700 transition-all font-mono tracking-widest uppercase"
+                            required
+                        />
+                    </div>
+
                     <div className="flex gap-4">
                         <div className="form-control w-1/2">
                             <label className="label py-0 mb-2 text-xs font-semibold text-slate-900">Prénom</label>
@@ -206,7 +221,7 @@ const SignUp = () => {
                     </div>
 
                     <button
-                        disabled={loading || errors.email || errors.password || !formData.email}
+                        disabled={loading || errors.email || errors.password || !formData.email || !formData.invite_code}
                         type='submit'
                         className="btn btn-primary w-full h-14 bg-[#00d991] hover:bg-[#00c282] border-none text-slate-900 font-bold normal-case rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-emerald-100 mt-4 transition-all"
                     >

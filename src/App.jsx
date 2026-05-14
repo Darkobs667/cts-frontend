@@ -14,7 +14,6 @@ import AdminresultsPage from './Pages/adminresult.jsx';
 import ProtectedRoute from "./Components/ProtectedRoute.jsx";
 import ElecteurScrutins from "./Pages/ElecteurScrutins.jsx";
 import VoterResults from './Pages/VoterResults.jsx';
-import AdminCandidatures from './Pages/AdminCandidatures.jsx';
 
 function App() {
   return (
@@ -85,11 +84,6 @@ function App() {
       <Route path="/adminresultsPage" element={
         <ProtectedRoute allowedRole="admin">
           <AdminresultsPage />
-        </ProtectedRoute>
-      } />
-      <Route path="/admin-candidatures" element={
-        <ProtectedRoute allowedRole="admin">
-          <AdminCandidatures />
         </ProtectedRoute>
       } />
 {/* Redirection si la route n'existe pas */}

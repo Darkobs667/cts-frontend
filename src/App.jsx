@@ -15,7 +15,6 @@ import ProtectedRoute from "./Components/ProtectedRoute.jsx";
 import ElecteurScrutins from "./Pages/ElecteurScrutins.jsx";
 import VoterResults from './Pages/VoterResults.jsx';
 import AdminCandidatures from './Pages/AdminCandidatures.jsx';
-import InviteCodes from './Pages/InviteCodes.jsx';
 
 function App() {
   return (
@@ -93,13 +92,7 @@ function App() {
           <AdminCandidatures />
         </ProtectedRoute>
       } />
-      <Route path="/invite-codes" element={
-        <ProtectedRoute allowedRole="admin">
-          <InviteCodes />
-        </ProtectedRoute>
-      } />
-
-      {/* Redirection si la route n'existe pas */}
+{/* Redirection si la route n'existe pas */}
       <Route path="*" element={<Navigate to="/login" replace />} />
     </Routes>
   );

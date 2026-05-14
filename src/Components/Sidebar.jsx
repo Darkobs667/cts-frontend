@@ -1,7 +1,7 @@
 // ─────────────────────────────────────────────────────────────
 // Sidebar.jsx
 // ─────────────────────────────────────────────────────────────
-import { LayoutDashboard, Users, Vote, ExternalLink, LogOut, ChartPie, X, ClipboardList, KeyRound } from 'lucide-react';
+import { LayoutDashboard, Users, Vote, ExternalLink, LogOut, ChartPie, X, ClipboardList } from 'lucide-react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import Logocts from "../assets/logo-cts2-removebg-preview.png";
 import { useState } from 'react';
@@ -50,7 +50,6 @@ const Sidebar = ({ isOpen, toggle, activePage }) => {
     { id: 'parametres',          label: 'Candidats & scrutins',      icon: ExternalLink,    to: '/candidats'           },
     { id: 'candidatures',        label: 'Candidatures en attente',   icon: ClipboardList,   to: '/admin-candidatures'  },
     { id: 'adminresultsPage',    label: 'Résultats',                 icon: ChartPie,        to: '/adminresultsPage'    },
-    { id: 'invite-codes',        label: 'Codes d\'invitation',       icon: KeyRound,        to: '/invite-codes'        },
   ];
 
   return (

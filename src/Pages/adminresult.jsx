@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import AdminLayout from '../Components/AdminLayout';
 import {
-  Users, TrendingUp, ShieldCheck, Loader2, User, Radio, Timer, FileDown, XCircle, Printer
+  Users, TrendingUp, ShieldCheck, Loader2, User, Radio, Timer, FileDown, XCircle, Printer, ClipboardList, Wifi, MapPin
 } from 'lucide-react';
 import api from '../services/api';
 
@@ -68,13 +68,17 @@ const RingProgress = ({ value }) => {
   );
 };
 
-const CandidateRow = ({ c, index, votersCount, tickPulse }) => {
-  const percent = votersCount > 0 ? ((c.votes_count / votersCount) * 100).toFixed(1) : 0;
-  const isLeader = index === 0 && c.votes_count > 0;
+const CandidateRow = ({ c, index, votersCount, tickPulse, isActive, hasPhysical }) => {
+  const onlinePct  = votersCount > 0 ? ((c.online_votes  / votersCount) * 100).toFixed(1) : 0;
+  const physPct    = votersCount > 0 ? ((c.physical_votes / votersCount) * 100).toFixed(1) : 0;
+  const totalPct   = votersCount > 0 ? ((c.votes_count    / votersCount) * 100).toFixed(1) : 0;
+  const isLeader   = index === 0 && c.votes_count > 0;
+  const showSplit  = !isActive && hasPhysical;
+
   return (
     <div className="group relative">
       {isLeader && <span className="absolute -left-8 top-1/2 -translate-y-1/2 w-1 h-10 rounded-full bg-emerald-500" />}
-      <div className="flex items-center gap-4 mb-3">
+      <div className="flex items-center gap-4 mb-2">
         <span className="text-[11px] font-black text-slate-300 w-4 shrink-0 text-right">{index + 1}</span>
         <div className={`w-11 h-11 rounded-2xl overflow-hidden shrink-0 border-2 transition-all duration-300 ${isLeader ? 'border-emerald-400' : 'border-slate-100'}`}>
           {c.photo_path ? (
@@ -85,28 +89,71 @@ const CandidateRow = ({ c, index, votersCount, tickPulse }) => {
         </div>
         <div className="flex-1 min-w-0">
           <h4 className="text-sm font-black text-slate-800 truncate leading-tight">{c.name}</h4>
-          <p className="text-[10px] font-bold text-slate-400 mt-0.5 flex items-center gap-1.5">
-            <AnimatedNumber value={c.votes_count} /> voix comptabilisées
-            {tickPulse && isLeader && <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />}
-          </p>
+          {showSplit ? (
+            <div className="flex items-center gap-3 mt-0.5">
+              <span className="flex items-center gap-1 text-[9px] font-black text-blue-500">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-400 inline-block" />
+                <AnimatedNumber value={c.online_votes} /> en ligne
+              </span>
+              <span className="flex items-center gap-1 text-[9px] font-black text-amber-500">
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 inline-block" />
+                <AnimatedNumber value={c.physical_votes} /> physique
+              </span>
+            </div>
+          ) : (
+            <p className="text-[10px] font-bold text-slate-400 mt-0.5 flex items-center gap-1.5">
+              <AnimatedNumber value={c.online_votes ?? c.votes_count} /> voix en ligne
+              {tickPulse && isLeader && <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />}
+            </p>
+          )}
         </div>
-        <span className={`text-xl font-black tabular-nums ${isLeader ? 'text-emerald-600' : 'text-slate-900'}`}>{percent}%</span>
+        <span className={`text-xl font-black tabular-nums ${isLeader ? 'text-emerald-600' : 'text-slate-900'}`}>
+          {showSplit ? totalPct : onlinePct}%
+        </span>
       </div>
-      <div className="ml-9 h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200 shadow-inner">
-        <div className={`h-full rounded-full transition-all duration-1000 ease-out ${isLeader ? 'bg-gradient-to-r from-emerald-400 to-emerald-600' : 'bg-slate-300'}`} style={{ width: `${percent}%` }} />
+
+      {/* barre double ou simple */}
+      <div className="ml-9 h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200 shadow-inner flex">
+        {showSplit ? (
+          <>
+            <div
+              className="h-full bg-blue-400 transition-all duration-1000 ease-out"
+              style={{ width: `${onlinePct}%` }}
+            />
+            <div
+              className="h-full bg-amber-400 transition-all duration-1000 ease-out"
+              style={{ width: `${physPct}%` }}
+            />
+          </>
+        ) : (
+          <div
+            className={`h-full rounded-full transition-all duration-1000 ease-out ${isLeader ? 'bg-gradient-to-r from-emerald-400 to-emerald-600' : 'bg-slate-300'}`}
+            style={{ width: `${onlinePct}%` }}
+          />
+        )}
       </div>
     </div>
   );
 };
 
-// Carte d'un scrutin (affichage des résultats) - AVEC LEADER DANS L'EN-TÊTE
-const ElectionCard = ({ election, totalInscritsGlobaux, onClose }) => {
-  const { id, title, is_active, total_votes, candidates } = election;
+// Carte d'un scrutin (affichage des résultats)
+const ElectionCard = ({ election, totalInscritsGlobaux, onClose, onPhysicalSaved }) => {
+  const { id, title, is_active, total_votes, online_total, physical_total, has_physical, candidates } = election;
   const votersCount = total_votes;
   const participationRate = totalInscritsGlobaux > 0 ? ((votersCount / totalInscritsGlobaux) * 100).toFixed(1) : 0;
   const sortedCandidates = [...candidates].sort((a, b) => b.votes_count - a.votes_count);
   const leader = sortedCandidates[0];
   const [closing, setClosing] = useState(false);
+  const [showPhysical, setShowPhysical] = useState(false);
+  const [physInputs, setPhysInputs] = useState({});
+  const [savingPhys, setSavingPhys] = useState(false);
+
+  // Initialiser les inputs avec les valeurs existantes
+  useEffect(() => {
+    const init = {};
+    candidates.forEach(c => { init[c.id] = c.physical_votes ?? 0; });
+    setPhysInputs(init);
+  }, [candidates]);
 
   const handleClose = async () => {
     if (!window.confirm(`Clôturer définitivement le scrutin "${title}" ?`)) return;
@@ -118,6 +165,19 @@ const ElectionCard = ({ election, totalInscritsGlobaux, onClose }) => {
       console.error("Erreur lors de la clôture", error);
     } finally {
       setClosing(false);
+    }
+  };
+
+  const handleSavePhysical = async () => {
+    setSavingPhys(true);
+    try {
+      await api.post(`/positions/${id}/physical-votes`, { votes: physInputs });
+      setShowPhysical(false);
+      if (onPhysicalSaved) onPhysicalSaved();
+    } catch (e) {
+      alert('Erreur lors de la sauvegarde.');
+    } finally {
+      setSavingPhys(false);
     }
   };
 
@@ -137,38 +197,41 @@ const ElectionCard = ({ election, totalInscritsGlobaux, onClose }) => {
             </div>
           </div>
 
-          {/* Partie droite : leader (si votes) + bouton clôturer */}
+          {/* Partie droite : leader + boutons */}
           <div className="flex items-center gap-4 flex-wrap">
             {leader && leader.votes_count > 0 && (
               <div className="flex items-center gap-2.5 bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-2 shadow-sm">
                 <div className="w-8 h-8 rounded-xl overflow-hidden ring-2 ring-emerald-400 shrink-0">
                   {leader.photo_path ? (
-                    <img
-                      src={`${import.meta.env.VITE_STORAGE_URL}/${leader.photo_path}`}
-                      className="w-full h-full object-cover"
-                      alt={leader.name}
-                    />
+                    <img src={`${import.meta.env.VITE_STORAGE_URL}/${leader.photo_path}`} className="w-full h-full object-cover" alt={leader.name} />
                   ) : (
-                    <div className="w-full h-full bg-slate-100 flex items-center justify-center">
-                      <User size={14} className="text-slate-400" />
-                    </div>
+                    <div className="w-full h-full bg-slate-100 flex items-center justify-center"><User size={14} className="text-slate-400" /></div>
                   )}
                 </div>
                 <div>
-                  <p className="text-[8px] font-black text-emerald-600 tracking-widest uppercase leading-none mb-0.5">
-                    En tête
-                  </p>
-                  <p className="text-sm font-black text-slate-800 leading-tight">
-                    {leader.name}
-                  </p>
+                  <p className="text-[8px] font-black text-emerald-600 tracking-widest uppercase leading-none mb-0.5">En tête</p>
+                  <p className="text-sm font-black text-slate-800 leading-tight">{leader.name}</p>
                 </div>
               </div>
             )}
 
-            {is_active && (
+            {/* Bouton saisie votes physiques — seulement si scrutin clôturé */}
+            {!is_active && (
               <button
-                onClick={handleClose}
-                disabled={closing}
+                onClick={() => setShowPhysical(!showPhysical)}
+                className={`flex items-center gap-2 px-4 py-2 rounded-2xl text-xs font-black border transition-all ${
+                  showPhysical
+                    ? 'bg-amber-500 text-white border-amber-500'
+                    : 'bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-100'
+                }`}
+              >
+                <ClipboardList size={15} />
+                {has_physical ? 'Modifier votes physiques' : 'Saisir votes physiques'}
+              </button>
+            )}
+
+            {is_active && (
+              <button onClick={handleClose} disabled={closing}
                 className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-all text-xs font-black"
               >
                 <XCircle size={16} /> {closing ? 'Fermeture...' : 'Clôturer'}
@@ -176,6 +239,82 @@ const ElectionCard = ({ election, totalInscritsGlobaux, onClose }) => {
             )}
           </div>
         </div>
+
+        {/* ── Bandeau état des votes ── */}
+        {is_active ? (
+          <div className="flex items-center gap-2 mb-5 bg-blue-50 border border-blue-100 rounded-2xl px-4 py-2.5">
+            <Wifi size={13} className="text-blue-500 shrink-0" />
+            <p className="text-[10px] font-black text-blue-600">
+              Résultats provisoires — votes en ligne uniquement ({online_total ?? total_votes} voix)
+            </p>
+            <span className="ml-auto text-[9px] font-black text-blue-400 bg-blue-100 px-2 py-0.5 rounded-lg">Avant jour J</span>
+          </div>
+        ) : has_physical ? (
+          <div className="flex items-center gap-4 mb-5 bg-slate-50 border border-slate-100 rounded-2xl px-4 py-2.5">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-blue-400 shrink-0" />
+              <p className="text-[10px] font-black text-blue-600">En ligne : {online_total}</p>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
+              <p className="text-[10px] font-black text-amber-600">Physique : {physical_total}</p>
+            </div>
+            <span className="ml-auto text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-lg">
+              Résultats finaux
+            </span>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 mb-5 bg-amber-50 border border-amber-100 rounded-2xl px-4 py-2.5">
+            <MapPin size={13} className="text-amber-500 shrink-0" />
+            <p className="text-[10px] font-black text-amber-600">
+              Scrutin clôturé — votes physiques non encore saisis
+            </p>
+          </div>
+        )}
+
+        {/* ── Formulaire saisie votes physiques ── */}
+        {showPhysical && (
+          <div className="mb-6 bg-amber-50 border border-amber-200 rounded-3xl p-5">
+            <p className="text-[10px] font-black text-amber-700 uppercase tracking-widest mb-4">
+              Saisie des votes physiques — délibération du jury
+            </p>
+            <div className="space-y-3">
+              {candidates.map(c => (
+                <div key={c.id} className="flex items-center gap-4 bg-white rounded-2xl px-4 py-3 border border-amber-100">
+                  <div className="w-8 h-8 rounded-xl overflow-hidden bg-slate-100 shrink-0">
+                    {c.photo_path
+                      ? <img src={`${import.meta.env.VITE_STORAGE_URL}/${c.photo_path}`} className="w-full h-full object-cover" alt={c.name} />
+                      : <div className="w-full h-full flex items-center justify-center"><User size={14} className="text-slate-300" /></div>
+                    }
+                  </div>
+                  <span className="flex-1 text-sm font-black text-slate-800">{c.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[9px] font-black text-slate-400">{c.online_votes} en ligne</span>
+                    <span className="text-slate-200">+</span>
+                    <input
+                      type="number"
+                      min={0}
+                      value={physInputs[c.id] ?? 0}
+                      onChange={e => setPhysInputs(prev => ({ ...prev, [c.id]: parseInt(e.target.value) || 0 }))}
+                      className="w-20 h-9 text-center bg-amber-50 border border-amber-200 rounded-xl font-black text-amber-800 focus:outline-none focus:ring-2 focus:ring-amber-400"
+                    />
+                    <span className="text-[9px] font-black text-amber-600">physique</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-end gap-3 mt-4">
+              <button onClick={() => setShowPhysical(false)}
+                className="px-4 py-2 rounded-2xl text-[11px] font-black text-slate-400 bg-white border border-slate-200 hover:bg-slate-50 transition-all">
+                Annuler
+              </button>
+              <button onClick={handleSavePhysical} disabled={savingPhys}
+                className="px-5 py-2 rounded-2xl text-[11px] font-black text-white bg-amber-500 hover:bg-amber-600 shadow-lg shadow-amber-100 active:scale-95 transition-all disabled:opacity-60">
+                {savingPhys ? 'Enregistrement...' : 'Valider les votes physiques'}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Résultats (inchangés) */}
         <div className="flex flex-col lg:flex-row gap-8">
@@ -192,7 +331,7 @@ const ElectionCard = ({ election, totalInscritsGlobaux, onClose }) => {
             </div>
             <div className="space-y-8">
               {sortedCandidates.map((c, i) => (
-                <CandidateRow key={i} c={c} index={i} votersCount={votersCount} tickPulse={false} />
+                <CandidateRow key={i} c={c} index={i} votersCount={votersCount} tickPulse={false} isActive={is_active} hasPhysical={has_physical} />
               ))}
             </div>
           </div>
@@ -346,6 +485,7 @@ const AdminresultsPage = () => {
             election={election}
             totalInscritsGlobaux={totalInscrits}
             onClose={handleCloseElection}
+            onPhysicalSaved={fetchAllResults}
           />
         ))}
       </div>

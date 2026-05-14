@@ -15,10 +15,7 @@ const candidateService = {
   },
 
   async update(id, formData) {
-    // Laravel attend une requête PUT, mais FormData + Axios ne supporte que POST.
-    // On ajoute donc _method=PUT pour simuler un PUT via la route POST.
-    formData.append('_method', 'PUT');
-    const res = await api.post(`/candidates/${id}`, formData, {
+    const res = await api.post(`/candidates/${id}/update`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return res.data;

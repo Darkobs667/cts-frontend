@@ -6,6 +6,12 @@ const ProtectedRoute = ({ children, allowedRole }) => {
     const [status, setStatus] = useState('loading');
     const [userRole, setUserRole] = useState(null);
 
+    const clearAuth = () => {
+        localStorage.removeItem('user_token');
+        localStorage.removeItem('user_tokenrefresh');
+        localStorage.removeItem('user_data');
+    };
+
     useEffect(() => {
         const token = localStorage.getItem('user_token');
         if (!token) { setStatus('unauthorized'); return; }
@@ -13,28 +19,16 @@ const ProtectedRoute = ({ children, allowedRole }) => {
         api.get('/me')
             .then(res => {
                 const user = res.data?.user;
-                if (!user) { setStatus('unauthorized'); return; }
+                if (!user) { clearAuth(); setStatus('unauthorized'); return; }
 
-                // Toujours synchroniser le localStorage avec les données fraîches
                 localStorage.setItem('user_data', JSON.stringify(user));
-
-                // Vérifier que l'email est vérifié
-                if (!user.email_verified_at) {
-                    localStorage.removeItem('user_token');
-                    localStorage.removeItem('user_tokenrefsh');
-                    localStorage.removeItem('user_data');
-                    setStatus('unauthorized');
-                    return;
-                }
 
                 const role = user.role;
                 setUserRole(role);
                 setStatus(allowedRole && role !== allowedRole ? 'wrong_role' : 'ok');
             })
             .catch(() => {
-                localStorage.removeItem('user_token');
-                localStorage.removeItem('user_tokenrefsh');
-                localStorage.removeItem('user_data');
+                clearAuth();
                 setStatus('unauthorized');
             });
     }, [allowedRole]);

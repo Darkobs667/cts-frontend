@@ -1,31 +1,24 @@
 import { Lock, LogIn, ShieldCheck, Mail, Eye, EyeOff } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useNavigate } from "react-router";
+import { Link, useNavigate, useLocation } from "react-router";
 import authService from '../services/authService';
 import logocts from "../assets/logo-cts2-removebg-preview.png";
 
 const LoginCTS = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const successMessage = location.state?.message || '';
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
 
-  const [formData, setFormData] = useState({
-    identifiant: '',
-    password: ''
-  });
-
-  const [errors, setErrors] = useState({
-    identifiant: '',
-    password: ''
-  });
+  const [formData, setFormData] = useState({ identifiant: '', password: '' });
+  const [errors, setErrors] = useState({ identifiant: '', password: '' });
 
   const validateField = (name, value) => {
     let errorMsg = '';
-    if (name === 'password') {
-      if (value && value.length < 8) {
-        errorMsg = "Minimum 8 caractères requis.";
-      }
+    if (name === 'password' && value && value.length < 8) {
+      errorMsg = "Minimum 8 caractères requis.";
     }
     setErrors(prev => ({ ...prev, [name]: errorMsg }));
   };
@@ -43,13 +36,12 @@ const LoginCTS = () => {
     setServerError('');
 
     try {
-      const response = await authService.login({
+      const payload = await authService.login({
         email: formData.identifiant,
         password: formData.password
       });
 
-      // authService.login retourne response.data = { message, data: { access_token, user, refresh_token } }
-      const userRole = response?.data?.user?.role;
+      const userRole = payload?.user?.role;
 
       if (userRole === 'admin') {
         navigate('/admin');
@@ -58,14 +50,10 @@ const LoginCTS = () => {
       } else {
         setServerError("Erreur : réponse inattendue du serveur.");
       }
-    } catch (error) {
+    } catch (err) {
       let errorMsg = "Identifiants incorrects.";
-      if (error?.error) errorMsg = error.error;
-      else if (error?.message?.includes('Network')) errorMsg = "Impossible de contacter le serveur. Vérifiez votre connexion.";
-      else if (error?.message?.includes('500')) errorMsg = "Erreur serveur. Veuillez réessayer dans quelques instants.";
-      else if (error?.message?.includes('403')) errorMsg = "Email non vérifié. Vérifiez votre boîte mail.";
-      else if (error?.message?.includes('404')) errorMsg = "Aucun compte trouvé avec cet email.";
-      else if (error?.message) errorMsg = error.message;
+      if (err?.error) errorMsg = err.error;
+      else if (err?.errors) errorMsg = typeof err.errors === 'string' ? err.errors : Object.values(err.errors).flat().join(' ');
       setServerError(errorMsg);
     } finally {
       setLoading(false);
@@ -84,6 +72,12 @@ const LoginCTS = () => {
       </div>
 
       <div className="card w-full max-w-md bg-white shadow-[0_20px_50px_rgba(0,0,0,0.08)] rounded-3xl p-10 border border-slate-50">
+
+        {successMessage && (
+          <div className="bg-emerald-50 text-emerald-600 p-3 rounded-xl text-xs font-bold mb-6 text-center border border-emerald-100">
+            {successMessage}
+          </div>
+        )}
 
         {serverError && (
           <div className="bg-red-50 text-red-500 p-3 rounded-xl text-xs font-bold mb-6 text-center border border-red-100">

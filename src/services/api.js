@@ -49,7 +49,7 @@ api.interceptors.response.use(
             original._retry = true;
             isRefreshing = true;
 
-            const refreshToken = localStorage.getItem('user_tokenrefsh');
+            const refreshToken = localStorage.getItem('user_tokenrefresh');
             if (refreshToken) {
                 try {
                     const res = await axios.post(`${API_URL}/refresh-token`, { refresh_token: refreshToken });
@@ -62,7 +62,7 @@ api.interceptors.response.use(
                 } catch (refreshError) {
                     processQueue(refreshError, null);
                     localStorage.removeItem('user_token');
-                    localStorage.removeItem('user_tokenrefsh');
+                    localStorage.removeItem('user_tokenrefresh');
                     localStorage.removeItem('user_data');
                     window.location.href = '/login';
                     return Promise.reject(refreshError);

@@ -14,8 +14,6 @@ import AdminresultsPage from './Pages/adminresult.jsx';
 import ProtectedRoute from "./Components/ProtectedRoute.jsx";
 import ElecteurScrutins from "./Pages/ElecteurScrutins.jsx";
 import VoterResults from './Pages/VoterResults.jsx';
-import VerifyPending from './Pages/VerifyPending.jsx';
-import VerifyEmail from './Pages/VerifyEmail.jsx';
 import AdminCandidatures from './Pages/AdminCandidatures.jsx';
 
 function App() {
@@ -25,8 +23,6 @@ function App() {
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/login" element={<LoginCTS />} />
       <Route path="/signup" element={<SignUp />} />
-      <Route path="/verify-pending" element={<VerifyPending />} />
-      <Route path="/verify-email/:token" element={<VerifyEmail />} />
       
       {/* --- ROUTES ÉLECTEURS (Protégées par rôle 'electeur') --- */}
       <Route path="/voterDashboard" element={

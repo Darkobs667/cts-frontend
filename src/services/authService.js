@@ -1,48 +1,37 @@
 import api from './api';
 
-
-
 const authService = {
-    //  fonction d'inscription 
     register: async (userData) => {
         try {
-            const response = await api.post(`/register`, userData);
+            const response = await api.post('/register', userData);
             return response.data;
         } catch (error) {
-            if (error.response && error.response.data) {
-                throw error.response.data;
-            }
-            throw new Error("Impossible de contacter le serveur de vote.");
+            throw error.response?.data ?? { error: "Impossible de contacter le serveur de vote." };
         }
     },
 
     login: async (credentials) => {
         try {
-            const response = await api.post(`/login`, credentials);
-            const backendData = response.data?.data ?? response.data;
+            const response = await api.post('/login', credentials);
+            // Le backend retourne { message, data: { access_token, refresh_token, user } }
+            const payload = response.data?.data ?? response.data;
 
-            if (backendData && backendData.access_token) {
-                localStorage.setItem('user_token', backendData.access_token);
-                if (backendData.refresh_token) {
-                    localStorage.setItem('user_tokenrefsh', backendData.refresh_token);
-                }
-                localStorage.setItem('user_data', JSON.stringify(backendData.user));
+            if (payload?.access_token) {
+                localStorage.setItem('user_token', payload.access_token);
+                localStorage.setItem('user_tokenrefresh', payload.refresh_token ?? '');
+                localStorage.setItem('user_data', JSON.stringify(payload.user));
             }
 
-            // Retourner toujours l'objet data pour que Login.jsx puisse lire access_token et user
-            return backendData;
+            return payload;
         } catch (error) {
-            if (error.response && error.response.data) {
-                throw error.response.data;
-            }
-            throw new Error("Erreur lors de la connexion au serveur.");
+            throw error.response?.data ?? { error: "Erreur lors de la connexion au serveur." };
         }
     },
 
     logout: async () => {
         try { await api.post('/logout'); } catch (_) {}
         localStorage.removeItem('user_token');
-        localStorage.removeItem('user_tokenrefsh');
+        localStorage.removeItem('user_tokenrefresh');
         localStorage.removeItem('user_data');
     }
 };

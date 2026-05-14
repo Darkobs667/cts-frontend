@@ -15,6 +15,7 @@ export const electeurService = {
             ...userData,
             password_confirmation: userData.password,
             browserId: `admin-${Date.now()}`,
+            role: 'electeur',
         });
         return response.data;
     },

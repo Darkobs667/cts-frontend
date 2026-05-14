@@ -141,7 +141,8 @@ const Candidats = () => {
       fetchCandidats();
     } catch (error) {
       console.error(error);
-      setToast({ message: "Erreur lors de l'enregistrement.", type: 'error' });
+      const msg = error.response?.data?.message || "Erreur lors de l'enregistrement.";
+      setToast({ message: msg, type: 'error' });
     } finally {
       setSaving(false);
     }

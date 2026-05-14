@@ -2,11 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import VoterLayout from "../Components/VoterLayout";
 import Toast from '../Components/Toast';
 import { useLocation, useNavigate } from "react-router";
-import { ShieldCheck, ArrowLeft, Send, CheckCircle, User, Lock, Share2, Copy, Check } from 'lucide-react';
+import { ShieldCheck, ArrowLeft, Send, CheckCircle, User, Lock, Share2, Copy, Check, ImageDown } from 'lucide-react';
 import api from '../services/api';
 import confetti from 'canvas-confetti';
 import { getConnectedUser } from '../utils/userHelper';
 import logocts from '../assets/logo-cts2-removebg-preview.png';
+import html2canvas from 'html2canvas';
 
 /* ── Lance les confettis ── */
 const fireConfetti = () => {
@@ -23,8 +24,8 @@ const fireConfetti = () => {
 };
 
 /* ── Carte de vote partageable ── */
-const VoteCard = ({ voteRef, electionTitle, candidateName, voterName, date }) => (
-  <div className="relative bg-slate-900 rounded-3xl overflow-hidden p-7 text-white">
+const VoteCard = React.forwardRef(({ voteRef, electionTitle, candidateName, voterName, date }, ref) => (
+  <div ref={ref} className="relative bg-slate-900 rounded-3xl overflow-hidden p-7 text-white">
     {/* fond décoratif */}
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       <div className="absolute -top-16 -right-16 w-56 h-56 rounded-full bg-emerald-500/10" />
@@ -97,7 +98,8 @@ const VoteCard = ({ voteRef, electionTitle, candidateName, voterName, date }) =>
       </p>
     </div>
   </div>
-);
+));
+VoteCard.displayName = 'VoteCard';
 
 const VoterRecap = () => {
   const location = useLocation();
@@ -107,7 +109,9 @@ const VoterRecap = () => {
   const [voteRef, setVoteRef] = useState('');
   const [toast, setToast] = useState(null);
   const [copied, setCopied] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const confettiFired = useRef(false);
+  const cardRef = useRef(null);
 
   const { election, selectedCandidate } = location.state || {};
   const user = getConnectedUser();
@@ -157,15 +161,47 @@ const VoterRecap = () => {
   };
 
   const handleShare = async () => {
-    const text = `✅ J'ai voté pour "${election.titre}" sur la plateforme CTS Vote !\n🔐 Référence : ${voteRef}\n\n👉 cts-frontend.vercel.app`;
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: 'J\'ai voté — CTS Vote', text });
-      } catch (_) {}
-    } else {
-      await navigator.clipboard.writeText(text);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2500);
+    setSharing(true);
+    try {
+      const canvas = await html2canvas(cardRef.current, {
+        backgroundColor: null,
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+
+      canvas.toBlob(async (blob) => {
+        const file = new File([blob], 'mon-vote-cts.png', { type: 'image/png' });
+        const text = `✅ J'ai voté sur CTS Vote !\n🔐 Réf : ${voteRef}\n👉 cts-frontend.vercel.app`;
+
+        // Partage natif avec image (WhatsApp, Instagram, etc.)
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          try {
+            await navigator.share({
+              title: "J'ai voté — CTS Vote",
+              text,
+              files: [file],
+            });
+          } catch (_) {}
+        } else if (navigator.share) {
+          // Partage sans fichier (fallback texte)
+          try { await navigator.share({ title: "J'ai voté — CTS Vote", text }); } catch (_) {}
+        } else {
+          // Téléchargement direct de l'image
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'mon-vote-cts.png';
+          a.click();
+          URL.revokeObjectURL(url);
+          setCopied(true);
+          setTimeout(() => setCopied(false), 2500);
+        }
+        setSharing(false);
+      }, 'image/png');
+    } catch (err) {
+      console.error('Erreur partage:', err);
+      setSharing(false);
     }
   };
 
@@ -297,6 +333,7 @@ const VoterRecap = () => {
 
             {/* carte partageable */}
             <VoteCard
+              ref={cardRef}
               voteRef={voteRef}
               electionTitle={election.titre}
               candidateName={isBlanc ? 'Vote blanc' : (selectedCandidate.nom || selectedCandidate.name)}
@@ -305,10 +342,12 @@ const VoterRecap = () => {
             />
 
             {/* bouton partager */}
-            <button onClick={handleShare}
-              className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-[900] text-sm transition-all active:scale-[0.98] bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-100">
-              {copied ? (
-                <><Check size={18} /> Copié dans le presse-papier !</>
+            <button onClick={handleShare} disabled={sharing}
+              className="w-full flex items-center justify-center gap-3 py-4 rounded-2xl font-[900] text-sm transition-all active:scale-[0.98] bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-100 disabled:opacity-70">
+              {sharing ? (
+                <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Génération de l'image…</>
+              ) : copied ? (
+                <><ImageDown size={18} /> Image téléchargée !</>
               ) : (
                 <><Share2 size={18} /> Partager ma participation</>
               )}

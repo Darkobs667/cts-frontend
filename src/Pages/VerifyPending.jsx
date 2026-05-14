@@ -7,16 +7,24 @@ import api from '../services/api';
 const VerifyPending = () => {
     const location = useLocation();
     const email = location.state?.email || '';
-    const [status, setStatus] = useState('idle'); // idle | loading | sent | error
+    const [status, setStatus] = useState('idle');
+    const [errorMsg, setErrorMsg] = useState('Impossible de renvoyer l\'email. Réessayez plus tard.');
 
     const handleResend = async () => {
-        if (!email) { setStatus('error'); return; }
+        if (!email) {
+            setStatus('error');
+            setErrorMsg("Email introuvable. Retournez à l'inscription.");
+            return;
+        }
         setStatus('loading');
         try {
             await api.post('/resend-verification', { email });
             setStatus('sent');
-        } catch {
+        } catch (err) {
             setStatus('error');
+            if (err?.response?.status === 404) setErrorMsg("Email déjà vérifié ou introuvable.");
+            else if (err?.response?.status === 500) setErrorMsg("Erreur serveur. Réessayez dans quelques instants.");
+            else setErrorMsg("Impossible d'envoyer l'email. Vérifiez votre connexion.");
         }
     };
 
@@ -41,7 +49,7 @@ const VerifyPending = () => {
                 )}
                 {status === 'error' && (
                     <p className="mt-4 text-red-500 text-xs font-black bg-red-50 border border-red-100 rounded-2xl px-4 py-3">
-                        Impossible de renvoyer l'email. Réessayez plus tard.
+                        {errorMsg}
                     </p>
                 )}
 

@@ -59,11 +59,13 @@ const LoginCTS = () => {
         setServerError("Erreur : réponse inattendue du serveur.");
       }
     } catch (error) {
-      const errorMsg =
-        error?.error ||
-        error?.message ||
-        error?.response?.data?.error ||
-        "Identifiants incorrects.";
+      let errorMsg = "Identifiants incorrects.";
+      if (error?.error) errorMsg = error.error;
+      else if (error?.message?.includes('Network')) errorMsg = "Impossible de contacter le serveur. Vérifiez votre connexion.";
+      else if (error?.message?.includes('500')) errorMsg = "Erreur serveur. Veuillez réessayer dans quelques instants.";
+      else if (error?.message?.includes('403')) errorMsg = "Email non vérifié. Vérifiez votre boîte mail.";
+      else if (error?.message?.includes('404')) errorMsg = "Aucun compte trouvé avec cet email.";
+      else if (error?.message) errorMsg = error.message;
       setServerError(errorMsg);
     } finally {
       setLoading(false);

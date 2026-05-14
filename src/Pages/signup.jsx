@@ -79,11 +79,15 @@ const SignUp = () => {
 
             navigate('/verify-pending', { state: { email: formData.email } });
         } catch (err) {
-            let message = "Erreur de connexion au serveur.";
+            let message = "Erreur de connexion au serveur. Réessayez.";
             if (err?.error) message = err.error;
             else if (typeof err?.errors === 'string') message = err.errors;
-            else if (err?.message && !err.message.includes('500')) message = err.message;
-            else if (err?.message?.includes('500')) message = "Erreur serveur. Veuillez réessayer.";
+            else if (err?.errors?.email?.[0]) message = err.errors.email[0];
+            else if (err?.errors?.password?.[0]) message = err.errors.password[0];
+            else if (err?.errors?.browserId?.[0]) message = "Erreur d'identification de l'appareil. Rechargez la page.";
+            else if (err?.message?.includes('Network')) message = "Impossible de contacter le serveur. Vérifiez votre connexion.";
+            else if (err?.message?.includes('500')) message = "Erreur serveur. Veuillez réessayer dans quelques instants.";
+            else if (err?.message?.includes('422')) message = "Données invalides. Vérifiez les champs.";
             setServerError(message);
         } finally {
             setLoading(false);
@@ -138,7 +142,7 @@ const SignUp = () => {
                     </div>
 
                     <div className="form-control w-full">
-                        <label className="label py-0 mb-2 text-xs font-semibold text-slate-900">Email</label>
+                        <label className="label py-0 mb-2 text-xs font-semibold text-slate-900">Email <span className="text-emerald-500 font-black">(@uadb.edu.sn)</span></label>
                         <div className="relative group">
                             <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-500 transition-colors z-10">
                                 <MailQuestionMark size={18} />
@@ -148,7 +152,7 @@ const SignUp = () => {
                                 value={formData.email}
                                 onChange={handleChange}
                                 type="email"
-                                placeholder="exemple@email.com"
+                                placeholder="prenom.nom@uadb.edu.sn"
                                 className="input w-full h-14 pl-12 bg-slate-50 border-none focus:ring-2 focus:ring-emerald-400 rounded-2xl text-slate-700 transition-all font-medium"
                                 required
                             />

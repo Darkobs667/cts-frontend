@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router"; // Utilise react-router-dom pour la stabilité
+import { Routes, Route, Navigate } from "react-router";
 import LoginCTS from './Pages/Login.jsx';
 import Adminpage from "./Pages/Admin.jsx";
 import SignUp from './Pages/signup.jsx';
@@ -13,8 +13,6 @@ import VoterProfile from './Pages/VoterProfile.jsx';
 import AdminresultsPage from './Pages/adminresult.jsx';
 import ProtectedRoute from "./Components/ProtectedRoute.jsx";
 import ElecteurScrutins from "./Pages/ElecteurScrutins.jsx";
-import AdminCandidatures from "./Pages/AdminCandidatures.jsx";
-
 import InviteCodes from './Pages/InviteCodes.jsx';
 import VerifyPending from './Pages/VerifyPending.jsx';
 import VerifyEmail from './Pages/VerifyEmail.jsx';
@@ -50,6 +48,7 @@ function App() {
           <VoterHistory />
         </ProtectedRoute>
       } />
+      <Route path="/voter-receipts" element={<Navigate to="/voterHistory" replace />} />
       <Route path="/voterProfile" element={
         <ProtectedRoute allowedRole="electeur">
           <VoterProfile />
@@ -65,11 +64,6 @@ function App() {
       <Route path="/admin" element={
         <ProtectedRoute allowedRole="admin">
           <Adminpage />
-        </ProtectedRoute>
-      } />
-      <Route path="/candidatures" element={
-        <ProtectedRoute allowedRole="admin">
-          <AdminCandidatures />
         </ProtectedRoute>
       } />
       <Route path="/votes-elections" element={

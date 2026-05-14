@@ -1,26 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import VoterLayout from "../Components/VoterLayout";
 import { useNavigate } from "react-router";
-import StatCard from "../Components/StatCard";
-import { Users, Vote, CheckCircle, Clock, ArrowRight, ShieldCheck, Zap } from 'lucide-react';
+import { Vote, ArrowRight, ShieldCheck, Zap, CheckCircle2, Clock } from 'lucide-react';
 import { getConnectedUser } from '../utils/userHelper';
 import api from '../services/api';
 
-/* ── Stat card redesigned ── */
-const ModernStatCard = ({ label, value, icon: Icon, accent }) => (
-  <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 flex items-center gap-4 fade-up hover:shadow-md hover:border-slate-200 transition-all duration-300">
-    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${accent}`}>
-      <Icon size={20} className="text-white" />
-    </div>
-    <div className="min-w-0">
-      <p className="text-[9px] font-black text-slate-400 tracking-widest uppercase mb-1">{label}</p>
-      <p className="text-2xl font-[900] text-slate-900 leading-none tabular-nums">{value}</p>
-    </div>
-  </div>
-);
-
-/* ── Election row ── */
-const ElectionRow = ({ election, index, onVote }) => {
+const ElectionRow = ({ election, index, onVote, alreadyVoted }) => {
   const isActive = election.type === 'active';
 
   return (
@@ -30,7 +15,6 @@ const ElectionRow = ({ election, index, onVote }) => {
         hover:bg-emerald-50/40 hover:border-emerald-100 transition-all duration-200 fade-up"
       style={{ animationDelay: `${index * 70}ms` }}
     >
-      {/* left accent on hover */}
       <span className="absolute left-0 top-3 bottom-3 w-0.5 rounded-r-full bg-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
 
       {/* title */}
@@ -47,7 +31,7 @@ const ElectionRow = ({ election, index, onVote }) => {
         <span className="text-slate-400 text-xs font-bold italic">{election.date}</span>
       </div>
 
-      {/* status badge */}
+      {/* status */}
       <div className="flex md:justify-center">
         {isActive ? (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[9px] font-black bg-emerald-50 text-emerald-600 border border-emerald-100">
@@ -68,105 +52,83 @@ const ElectionRow = ({ election, index, onVote }) => {
       {/* action */}
       <div className="md:text-right">
         {isActive ? (
-          <button
-            onClick={() => onVote(election)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600
-              text-white rounded-2xl text-[10px] font-black shadow-sm shadow-emerald-100
-              active:scale-95 transition-all duration-200"
-          >
-            Voter maintenant
-            <ArrowRight size={13} />
-          </button>
+          alreadyVoted ? (
+            <span className="inline-flex items-center gap-1.5 px-4 py-2 rounded-2xl text-[10px] font-black bg-slate-50 text-slate-400 border border-slate-100">
+              <CheckCircle2 size={12} className="text-emerald-400" />
+              Déjà voté
+            </span>
+          ) : (
+            <button
+              onClick={() => onVote(election)}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600
+                text-white rounded-2xl text-[10px] font-black shadow-sm shadow-emerald-100
+                active:scale-95 transition-all duration-200"
+            >
+              Voter maintenant
+              <ArrowRight size={13} />
+            </button>
+          )
         ) : (
-          <span className="text-slate-300 text-[10px] font-black">En attente</span>
+          <span className="text-slate-300 text-[10px] font-black">Clôturé</span>
         )}
       </div>
     </div>
   );
 };
 
-/* ── Main page ── */
 const VoterDashboard = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [dashboardData, setDashboardData] = useState({
-    stats: {
-      totalElecteurs: 0,
-      votesClotures: 0,
-      votesEnCours: 0,
-      participation: '0%',
-    },
-    elections: [],
-  });
+  const [elections, setElections] = useState([]);
+  const [votedPositionIds, setVotedPositionIds] = useState([]);
+  const user = getConnectedUser();
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    const fetchData = async () => {
       try {
-        setLoading(true);
+        const [posRes, myVotesRes] = await Promise.all([
+          api.get('/positions'),
+          api.get('/votes/my'),
+        ]);
 
-        let stats = {
-          totalElecteurs: 0,
-          votesClotures: 0,
-          votesEnCours: 0,
-          participation: '0%',
-        };
-        try {
-          const statsRes = await api.get('/admin/stats-globales');
-          if (statsRes.data?.data) {
-            const s = statsRes.data.data;
-            stats = {
-              totalElecteurs: s.totalInscrits || 0,
-              votesClotures: s.votesClotures || 0,
-              votesEnCours: s.votesEnCours || 0,
-              participation: s.participation || '0',
-            };
-          }
-        } catch (error) {
-          console.warn("Stats non disponibles", error);
+        if (posRes.data?.success) {
+          const all = [
+            ...(posRes.data.data || []),
+            ...(posRes.data.failed || []),
+          ];
+          const mapped = all
+            .filter(pos => pos.is_active == 1)
+            .map(pos => ({
+              id: pos.id,
+              titre: pos.title,
+              date: pos.closes_at
+                ? new Date(pos.closes_at).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })
+                : 'Date inconnue',
+              type: 'active',
+            }));
+          setElections(mapped);
         }
 
-        let elections = [];
-        try {
-          const posRes = await api.get('/positions');
-          if (posRes.data?.success) {
-            const allPositions = [
-              ...(posRes.data.data || []),
-              ...(posRes.data.failed || []),
-            ];
-            elections = allPositions
-              .filter(pos => pos.is_active == 1)
-              .map(pos => ({
-                id: pos.id,
-                titre: pos.title,
-                date: pos.updated_at
-                  ? new Date(pos.updated_at).toLocaleDateString('fr-FR', {
-                      day: 'numeric', month: 'long', year: 'numeric',
-                    })
-                  : 'Date inconnue',
-                statut: pos.is_active == 1 ? 'En Cours' : 'Terminé',
-                type: pos.is_active == 1 ? 'active' : 'inactive',
-              }));
-          }
-        } catch (error) {
-          console.error("Erreur chargement des positions", error);
-        }
-
-        setDashboardData({ stats, elections });
+        const myVotes = Array.isArray(myVotesRes.data) ? myVotesRes.data : [];
+        // on récupère les position_id depuis les votes — on les déduit du titre via un autre appel
+        // mais /votes/my retourne election_title pas position_id, donc on stocke les titres
+        setVotedPositionIds(myVotes.map(v => v.election_title));
       } catch (error) {
-        console.error("Erreur de synchronisation :", error);
+        console.error('Erreur chargement dashboard:', error);
       } finally {
         setLoading(false);
       }
     };
-
-    fetchDashboardData();
+    fetchData();
   }, []);
 
   const handleStartVote = (election) => {
     navigate('/voterChoice', { state: { election } });
   };
 
-  const user = getConnectedUser();
+  const totalScrutins = elections.length;
+  const votesEffectues = votedPositionIds.length;
+  const resteAVoter = Math.max(0, totalScrutins - votesEffectues);
 
   return (
     <VoterLayout activePage="dashboard">
@@ -191,7 +153,7 @@ const VoterDashboard = () => {
       ) : (
         <div className="animate-in fade-in duration-500">
 
-          {/* ── header ── */}
+          {/* header */}
           <div className="mb-10 fade-up">
             <h1 className="text-xl md:text-2xl font-[900] text-slate-900">
               Tableau de bord électeur
@@ -203,63 +165,42 @@ const VoterDashboard = () => {
             </p>
           </div>
 
-          {/* ── stat cards ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
+          {/* stat cards — données pertinentes pour l'électeur */}
+          <div className="grid grid-cols-3 gap-4 mb-8">
             {[
-              {
-                label: 'Électeurs inscrits',
-                value: dashboardData.stats.totalElecteurs.toLocaleString(),
-                icon: Users,
-                accent: 'bg-emerald-500 shadow-lg shadow-emerald-100',
-                delay: '0ms',
-              },
-              {
-                label: 'Votes clôturés',
-                value: dashboardData.stats.votesClotures,
-                icon: CheckCircle,
-                accent: 'bg-blue-500 shadow-lg shadow-blue-100',
-                delay: '60ms',
-              },
-              {
-                label: 'Votes en cours',
-                value: dashboardData.stats.votesEnCours,
-                icon: Clock,
-                accent: 'bg-amber-500 shadow-lg shadow-amber-100',
-                delay: '120ms',
-              },
-              {
-                label: 'Participation',
-                value: `${dashboardData.stats.participation}%`,
-                icon: Vote,
-                accent: 'bg-purple-500 shadow-lg shadow-purple-100',
-                delay: '180ms',
-              },
+              { label: 'Scrutins ouverts',   value: totalScrutins,  accent: 'bg-emerald-500 shadow-lg shadow-emerald-100', delay: '0ms'   },
+              { label: 'Votes effectués',     value: votesEffectues, accent: 'bg-blue-500 shadow-lg shadow-blue-100',       delay: '60ms'  },
+              { label: 'Reste à voter',       value: resteAVoter,    accent: resteAVoter > 0 ? 'bg-amber-500 shadow-lg shadow-amber-100' : 'bg-slate-400', delay: '120ms' },
             ].map((s, i) => (
-              <div key={i} style={{ animationDelay: s.delay }} className="fade-up">
-                <ModernStatCard
-                  label={s.label}
-                  value={s.value}
-                  icon={s.icon}
-                  accent={s.accent}
-                />
+              <div
+                key={i}
+                className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 flex items-center gap-4 fade-up hover:shadow-md transition-all duration-300"
+                style={{ animationDelay: s.delay }}
+              >
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${s.accent}`}>
+                  <Vote size={20} className="text-white" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[9px] font-black text-slate-400 tracking-widest uppercase mb-1">{s.label}</p>
+                  <p className="text-2xl font-[900] text-slate-900 leading-none tabular-nums">{s.value}</p>
+                </div>
               </div>
             ))}
           </div>
 
-          {/* ── elections table ── */}
+          {/* elections table */}
           <div
             className="bg-white rounded-[36px] border border-slate-100 shadow-sm overflow-hidden fade-up"
-            style={{ animationDelay: '220ms' }}
+            style={{ animationDelay: '180ms' }}
           >
-            {/* table header */}
             <div className="px-7 py-6 border-b border-slate-50 flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-[900] text-slate-900">Scrutins disponibles</h2>
                 <p className="text-[9px] font-bold text-slate-400 mt-0.5">
-                  {dashboardData.elections.length} scrutin{dashboardData.elections.length !== 1 ? 's' : ''} ouvert{dashboardData.elections.length !== 1 ? 's' : ''}
+                  {totalScrutins} scrutin{totalScrutins !== 1 ? 's' : ''} ouvert{totalScrutins !== 1 ? 's' : ''}
                 </p>
               </div>
-              {dashboardData.elections.length > 0 && (
+              {totalScrutins > 0 && (
                 <div className="flex items-center gap-1.5 bg-emerald-50 border border-emerald-100 px-3 py-1.5 rounded-full">
                   <Zap size={9} className="text-emerald-500" />
                   <span className="text-[9px] font-black text-emerald-600">Live</span>
@@ -267,39 +208,35 @@ const VoterDashboard = () => {
               )}
             </div>
 
-            {/* column labels — desktop only */}
-            <div className="hidden md:grid grid-cols-4 px-7 py-4 text-[9px] font-black text-slate-300  uppercase border-b border-slate-50">
+            <div className="hidden md:grid grid-cols-4 px-7 py-4 text-[9px] font-black text-slate-300 uppercase border-b border-slate-50">
               <div>Poste à pourvoir</div>
               <div>Date de clôture</div>
               <div>Statut</div>
               <div className="text-right">Action</div>
             </div>
 
-            {/* rows */}
             <div className="px-2 py-2">
-              {dashboardData.elections.length === 0 ? (
+              {elections.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
                   <div className="w-16 h-16 bg-slate-50 rounded-[24px] border-2 border-dashed border-slate-200 flex items-center justify-center mb-4">
                     <Vote size={26} className="text-slate-200" />
                   </div>
                   <p className="text-slate-400 font-black text-sm">Aucun scrutin ouvert</p>
-                  <p className="text-slate-300 font-bold text-[10px] mt-1">
-                    Revenez plus tard pour voter
-                  </p>
+                  <p className="text-slate-300 font-bold text-[10px] mt-1">Revenez plus tard pour voter</p>
                 </div>
               ) : (
-                dashboardData.elections.map((election, i) => (
+                elections.map((election, i) => (
                   <ElectionRow
                     key={election.id}
                     election={election}
                     index={i}
                     onVote={handleStartVote}
+                    alreadyVoted={votedPositionIds.includes(election.titre)}
                   />
                 ))
               )}
             </div>
 
-            {/* footer */}
             <div className="px-7 py-4 border-t border-slate-50 flex items-center gap-2">
               <ShieldCheck size={12} className="text-emerald-500" />
               <p className="text-[9px] font-bold text-slate-300">

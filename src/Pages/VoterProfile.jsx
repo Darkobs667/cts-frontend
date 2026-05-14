@@ -8,24 +8,16 @@ const VoterProfile = () => {
   const [userData, setUserData] = useState(null);
 
   useEffect(() => {
-    const fetchProfileData = async () => {
-      try {
-        setLoading(true);
-        const user = getConnectedUser();
-        await new Promise(resolve => setTimeout(resolve, 600));
-        setUserData({
-          nom: user.fullName,
-          email: user.email,
-          uid: `CTS-${String(user.id).padStart(5, '0')}`,
-          initials: user.initials,
-        });
-      } catch (error) {
-        console.error("Erreur de chargement du profil:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProfileData();
+    const user = getConnectedUser();
+    if (user) {
+      setUserData({
+        nom: user.fullName,
+        email: user.email,
+        uid: `CTS-${String(user.id).padStart(5, '0')}`,
+        initials: user.initials,
+      });
+    }
+    setLoading(false);
   }, []);
 
   return (

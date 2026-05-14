@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router';
 import Logocts from "../assets/logo-cts2-removebg-preview.png";
 import { LayoutDashboard, CheckCircle, User, LogOut, Menu, X, Vote, ShieldAlert } from 'lucide-react';
 import { getConnectedUser } from '../utils/userHelper';
+import api from '../services/api';
 
 /* ── nav item ── */
 const NavItem = ({ item, isActive }) => (
@@ -43,14 +44,17 @@ const VoterLayout = ({ children, activePage }) => {
   const navigate = useNavigate();
 
   const menuItems = [
-    { id: 'dashboard',        label: 'Tableau de bord',            icon: LayoutDashboard, to: '/voterDashboard' },
-    { id: 'scrtins & postes', label: 'Scrutins et postes disponibles', icon: Vote,         to: '/scrutins'      },
-    { id: 'votes',            label: 'Mes Votes',                  icon: CheckCircle,     to: '/voterHistory'  },
-    { id: 'profile',          label: 'Profil',                     icon: User,            to: '/voterProfile'  },
+    { id: 'dashboard',        label: 'Tableau de bord',               icon: LayoutDashboard, to: '/voterDashboard' },
+    { id: 'scrtins & postes', label: 'Scrutins et postes disponibles', icon: Vote,            to: '/scrutins'      },
+    { id: 'votes',            label: 'Mes Votes & Reçus',             icon: CheckCircle,     to: '/voterHistory'  },
+    { id: 'profile',          label: 'Profil',                        icon: User,            to: '/voterProfile'  },
   ];
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsLoggingOut(true);
+    try {
+      await api.post('/logout');
+    } catch (_) {}
     setTimeout(() => {
       localStorage.clear();
       sessionStorage.clear();

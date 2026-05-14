@@ -153,8 +153,10 @@ const VoterHistory = () => {
       link.setAttribute('download', `Recu_Vote_${voteId}.pdf`);
       document.body.appendChild(link);
       link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
     } catch (error) {
-      alert("Impossible de générer le reçu pour le moment.", error);
+      alert('Impossible de générer le reçu pour le moment.');
     }
   };
 

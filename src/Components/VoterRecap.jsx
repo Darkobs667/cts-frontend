@@ -254,7 +254,7 @@ const VoterRecap = () => {
                   {voteRef}
                 </div>
                 <p className="text-[9px] font-bold text-slate-400 mt-3 text-center">
-                  Un justificatif a été envoyé à votre adresse institutionnelle.
+                  Conservez cette référence comme preuve de participation.
                 </p>
               </div>
 

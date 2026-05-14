@@ -259,6 +259,15 @@ const ElectionCard = ({ election, totalInscritsGlobaux, onClose, onPhysicalSaved
               <span className="w-2.5 h-2.5 rounded-full bg-amber-400 shrink-0" />
               <p className="text-[10px] font-black text-amber-600">Physique : {physical_total}</p>
             </div>
+            {election.quorum && (
+              <div className={`flex items-center gap-1.5 ml-2 px-2 py-0.5 rounded-lg border text-[9px] font-black ${
+                election.quorum_reached
+                  ? 'bg-emerald-50 border-emerald-100 text-emerald-600'
+                  : 'bg-red-50 border-red-100 text-red-500'
+              }`}>
+                {election.quorum_reached ? '✓' : '✗'} Quorum {election.quorum_reached ? 'atteint' : 'non atteint'} ({election.quorum} requis)
+              </div>
+            )}
             <span className="ml-auto text-[9px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-lg">
               Résultats finaux
             </span>

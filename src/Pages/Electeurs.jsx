@@ -24,6 +24,7 @@ const Electeurs = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [showAddModal, setShowAddModal] = useState(false);
   const [statusFilter, setStatusFilter] = useState('Tous les statuts');
+  const [resetModal, setResetModal] = useState({ open: false, password: '', nom: '' });
 
   // États pour l'association à un scrutin
   const [positions, setPositions] = useState([]);
@@ -86,15 +87,13 @@ const Electeurs = () => {
   };
 
   // Réinitialisation du mot de passe
-  const handleResetPassword = async (userId) => {
-    if (window.confirm('Voulez-vous réinitialiser le mot de passe de cet utilisateur ? Un mot de passe temporaire sera généré.')) {
+  const handleResetPassword = async (userId, nom) => {
+    if (window.confirm('Réinitialiser le mot de passe de cet utilisateur ?')) {
       try {
         const response = await api.put(`/users/${userId}/reset-password`);
-        const newPass = response.data.new_password;
-        alert(`Le nouveau mot de passe est : ${newPass}\nVeuillez le communiquer à l'utilisateur.`);
+        setResetModal({ open: true, password: response.data.new_password, nom });
       } catch (error) {
         alert('Erreur lors de la réinitialisation.');
-        console.error(error);
       }
     }
   };
@@ -260,6 +259,46 @@ const Electeurs = () => {
         </div>
       )}
 
+      {/* Modale reset password */}
+      {resetModal.open && (
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 space-y-5">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0">
+                <KeyRound size={18} className="text-blue-500" />
+              </div>
+              <div>
+                <p className="text-sm font-black text-slate-900">Mot de passe réinitialisé</p>
+                <p className="text-[10px] text-slate-400 font-medium">{resetModal.nom}</p>
+              </div>
+            </div>
+            <div>
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Nouveau mot de passe temporaire</p>
+              <div className="flex items-center gap-2 bg-slate-900 rounded-2xl px-4 py-3">
+                <code className="flex-1 font-mono font-black text-emerald-400 text-sm tracking-widest">
+                  {resetModal.password}
+                </code>
+                <button
+                  onClick={() => { navigator.clipboard.writeText(resetModal.password); }}
+                  className="text-slate-400 hover:text-emerald-400 transition-colors"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+              <p className="text-[9px] font-medium text-slate-400 mt-2">
+                Communiquez ce mot de passe à l'utilisateur en privé. Il devra le changer.
+              </p>
+            </div>
+            <button
+              onClick={() => setResetModal({ open: false, password: '', nom: '' })}
+              className="w-full py-3 bg-slate-900 hover:bg-emerald-500 text-white rounded-2xl font-black text-sm transition-all"
+            >
+              Fermer
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Contenu principal */}
       <div className="max-w-7xl mx-auto">
         <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
@@ -361,7 +400,7 @@ const Electeurs = () => {
                         <div className="flex justify-end gap-2">
                           {/* Réinitialiser le mot de passe */}
                           <button
-                            onClick={() => handleResetPassword(user.id)}
+                            onClick={() => handleResetPassword(user.id, user.nom)}
                             className="p-2.5 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-xl transition-all"
                             title="Réinitialiser le mot de passe"
                           >

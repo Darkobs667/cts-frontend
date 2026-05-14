@@ -6,12 +6,16 @@ const CreateElectionModal = ({ close, initialData = null }) => {
   const isEditing = !!initialData;
   const [titre, setTitre] = useState('');
   const [description, setDescription] = useState('');
+  const [closesAt, setClosesAt] = useState('');
+  const [quorum, setQuorum] = useState('');
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (initialData) {
       setTitre(initialData.title || '');
       setDescription(initialData.description || '');
+      setClosesAt(initialData.closes_at ? initialData.closes_at.slice(0, 16) : '');
+      setQuorum(initialData.quorum || '');
     }
   }, [initialData]);
 
@@ -23,6 +27,8 @@ const CreateElectionModal = ({ close, initialData = null }) => {
     title: titre,
     description: description || "Scrutin officiel",
     is_active: true,
+    closes_at: closesAt || null,
+    quorum: quorum ? parseInt(quorum) : null,
   };
 
   try {
@@ -81,6 +87,35 @@ const CreateElectionModal = ({ close, initialData = null }) => {
             <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3}
               className="w-full bg-slate-50 border-2 border-emerald-200 rounded-2xl p-5 font-bold text-slate-700 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-500 transition-all shadow-inner placeholder:text-slate-300 resize-none"
               placeholder="Décrivez rapidement l'enjeu de ce scrutin..." />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div>
+              <label className="text-[10px] font-black text-slate-400 ml-2 mb-3 block">
+                Clôture automatique (optionnelle)
+              </label>
+              <input
+                type="datetime-local"
+                value={closesAt}
+                onChange={(e) => setClosesAt(e.target.value)}
+                className="w-full bg-slate-50 border-2 border-emerald-200 rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-500 transition-all"
+              />
+              <p className="text-[9px] text-slate-400 font-medium mt-1 ml-2">Le scrutin se fermera automatiquement à cette date</p>
+            </div>
+            <div>
+              <label className="text-[10px] font-black text-slate-400 ml-2 mb-3 block">
+                Quorum minimum (optionnel)
+              </label>
+              <input
+                type="number"
+                min={1}
+                value={quorum}
+                onChange={(e) => setQuorum(e.target.value)}
+                placeholder="ex: 20"
+                className="w-full bg-slate-50 border-2 border-emerald-200 rounded-2xl p-4 font-bold text-slate-700 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-500 transition-all"
+              />
+              <p className="text-[9px] text-slate-400 font-medium mt-1 ml-2">Nombre minimum de votants pour valider les résultats</p>
+            </div>
           </div>
           {isEditing && (
             <div className="flex items-center gap-3">

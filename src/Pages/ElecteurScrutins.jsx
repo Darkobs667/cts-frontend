@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import VoterLayout from "../Components/VoterLayout";
 import { ChevronDown, ChevronUp, User, Vote, CheckCircle2 } from 'lucide-react';
+import { getPhotoUrl } from '../utils/userHelper';
 import api from '../services/api';
 
 const ElecteurScrutins = () => {
@@ -40,7 +41,7 @@ const ElecteurScrutins = () => {
               ? (`${c.user.first_name ?? ''} ${c.user.last_name ?? ''}`.trim() || `Utilisateur #${c.user_id}`)
               : `Utilisateur #${c.user_id}`,
             slogan: c.slogan || c.bio || 'Pas de profession de foi',
-            photo: c.photo_path ? `${import.meta.env.VITE_STORAGE_URL}/${c.photo_path}` : null,
+            photo: getPhotoUrl(c.photo_path),
           }))
         }));
       } catch (err) {

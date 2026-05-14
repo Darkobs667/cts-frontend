@@ -5,7 +5,8 @@ import {
   Plus, Trash2, Edit3, Camera, Loader2, X, CheckCircle2, Save, Quote, AlertTriangle,
 } from 'lucide-react';
 import candidateService from '../services/candidateService';
-import api from '../services/api'; // on garde api uniquement pour récupérer users et positions
+import api from '../services/api';
+import { getPhotoUrl } from '../utils/userHelper';
 
 const Candidats = () => {
   const [candidats, setCandidats] = useState([]);
@@ -102,11 +103,7 @@ const Candidats = () => {
     slogan: candidate.slogan || '',
     bio: candidate.bio || '',
     photo: null,
-    preview: candidate.photo_path
-      ? `${import.meta.env.VITE_STORAGE_URL}/${candidate.photo_path}`
-      : candidate.user?.photo
-      ? `${import.meta.env.VITE_STORAGE_URL}/${candidate.user.photo}`
-      : null,
+    preview: getPhotoUrl(candidate.photo_path) ?? getPhotoUrl(candidate.user?.photo) ?? null,
   });
   setShowModal(true);
 };
@@ -392,15 +389,15 @@ const Candidats = () => {
                     <tr key={candidat.id} className="hover:bg-slate-50/80 transition-all group">
                       <td className="px-6 py-4">
                         <div className="w-11 h-11 rounded-2xl overflow-hidden bg-slate-200 border border-slate-200">
-                          {candidat.photo_path ? (
+                          {getPhotoUrl(candidat.photo_path) ? (
                             <img
-                              src={`${import.meta.env.VITE_STORAGE_URL}/${candidat.photo_path}`}
+                              src={getPhotoUrl(candidat.photo_path)}
                               alt={candidat.user?.nom}
                               className="w-full h-full object-cover"
                             />
-                          ) : candidat.user?.photo ? (
+                          ) : getPhotoUrl(candidat.user?.photo) ? (
                             <img
-                              src={`${import.meta.env.VITE_STORAGE_URL}/${candidat.user.photo}`}
+                              src={getPhotoUrl(candidat.user.photo)}
                               alt={candidat.user?.nom}
                               className="w-full h-full object-cover"
                             />

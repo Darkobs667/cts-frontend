@@ -1,3 +1,13 @@
+/**
+ * Retourne l'URL complète d'une photo candidat.
+ * Supporte base64 (data URI) et les anciens chemins relatifs.
+ */
+export const getPhotoUrl = (photoPath) => {
+    if (!photoPath) return null;
+    if (photoPath.startsWith('data:')) return photoPath;
+    return `${import.meta.env.VITE_STORAGE_URL}/${photoPath}`;
+};
+
 export const getConnectedUser = () => {
     const userData = localStorage.getItem('user_data');
     if (!userData) return null;

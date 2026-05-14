@@ -3,6 +3,7 @@ import VoterLayout from "../Components/VoterLayout";
 import { Link, useLocation } from "react-router";
 import { User, ShieldAlert, Check, Loader2, Vote } from "lucide-react";
 import api from "../services/api";
+import { getPhotoUrl } from "../utils/userHelper";
 
 const VoterChoice = () => {
   const location = useLocation();
@@ -31,8 +32,8 @@ const VoterChoice = () => {
             : `Utilisateur #${c.user_id}`,
           profession: 'Candidat',
           slogan: c.slogan || c.bio || 'Pas de slogan',
-          photo: c.photo_path ? `${import.meta.env.VITE_STORAGE_URL}/${c.photo_path}` : null,
-          preview: c.photo_path ? `${import.meta.env.VITE_STORAGE_URL}/${c.photo_path}` : null,
+          photo: getPhotoUrl(c.photo_path),
+          preview: getPhotoUrl(c.photo_path),
         }));
         setCandidates(formatted);
       } catch (error) {

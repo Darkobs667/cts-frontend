@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import Logocts from "../assets/logo-cts2-removebg-preview.png";
 import { LayoutDashboard, CheckCircle, User, LogOut, Menu, X, Vote, ShieldAlert } from 'lucide-react';
-import { getConnectedUser } from '../utils/userHelper';
+import { useAuth } from '../hooks/useAuth'; // ← IMPORTANT : utiliser useAuth
 
 /* ── nav item ── */
 const NavItem = ({ item, isActive }) => (
@@ -41,10 +41,13 @@ const VoterLayout = ({ children, activePage }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  
+  // ← UTILISER useAuth au lieu de getConnectedUser
+  const { user, loading, logout } = useAuth();
 
   const menuItems = [
     { id: 'dashboard',        label: 'Tableau de bord',            icon: LayoutDashboard, to: '/voterDashboard' },
-    { id: 'scrtins & postes', label: 'Scrutins et postes disponibles', icon: Vote,         to: '/scrutins'      },
+    { id: 'scrtins & postes', label: 'Postes disponibles', icon: Vote,         to: '/scrutins'      },
     { id: 'votes',            label: 'Mes Votes',                  icon: CheckCircle,     to: '/voterHistory'  },
     { id: 'profile',          label: 'Profil',                     icon: User,            to: '/voterProfile'  },
   ];
@@ -52,13 +55,27 @@ const VoterLayout = ({ children, activePage }) => {
   const handleLogout = () => {
     setIsLoggingOut(true);
     setTimeout(() => {
-      localStorage.clear();
-      sessionStorage.clear();
+      logout(); // ← utiliser la fonction logout du hook
       navigate('/login');
     }, 1200);
   };
 
-  const user = getConnectedUser();
+  // Données utilisateur sécurisées (viennent du serveur, pas du localStorage modifiable)
+  const userFullName = user ? `${user.first_name} ${user.last_name}` : 'Chargement...';
+  const userInitials = user ? `${user.first_name?.charAt(0) || ''}${user.last_name?.charAt(0) || ''}`.toUpperCase() : '??';
+  const userRole = user?.role === 'admin' ? 'Administrateur' : 'Électeur';
+
+  // Pendant le chargement, on affiche un état neutre
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto"></div>
+          <p className="mt-4 text-slate-500 text-sm">Chargement de l'interface...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`min-h-screen bg-slate-50 text-slate-900 transition-opacity duration-500 ${
@@ -125,18 +142,18 @@ const VoterLayout = ({ children, activePage }) => {
           ))}
         </nav>
 
-        {/* user mini-card */}
+        {/* user mini-card (sécurisé) */}
         <div className="px-4 py-3 mx-3 mb-3 bg-slate-50 rounded-2xl border border-slate-100">
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 shadow-sm
               flex items-center justify-center font-[900] text-slate-400 text-xs shrink-0">
-              {user?.initials || '??'}
+              {userInitials}
             </div>
             <div className="min-w-0">
               <p className="text-[11px] font-[900] text-slate-800 truncate leading-tight">
-                {user?.fullName || 'Utilisateur'}
+                {userFullName}
               </p>
-              <p className="text-[9px] font-bold text-emerald-500 mt-0.5">{user?.role || 'électeur'}</p>
+              <p className="text-[9px] font-bold text-emerald-500 mt-0.5">{userRole}</p>
             </div>
           </div>
         </div>
@@ -191,19 +208,19 @@ const VoterLayout = ({ children, activePage }) => {
             </div>
           </div>
 
-          {/* right — user chip */}
+          {/* right — user chip (sécurisé) */}
           <div className="flex items-center gap-3">
             <div className="hidden sm:block text-right">
               <p className="text-xs font-[900] text-slate-900 leading-tight">
-                {user?.fullName || 'Utilisateur'}
+                {userFullName}
               </p>
               <p className="text-[9px] font-bold text-emerald-500 mt-0.5">
-                {user?.role || 'électeur'}
+                {userRole}
               </p>
             </div>
             <div className="w-9 h-9 rounded-2xl bg-slate-100 border border-slate-200
               flex items-center justify-center font-[900] text-slate-500 text-xs shrink-0">
-              {user?.initials || '??'}
+              {userInitials}
             </div>
           </div>
         </header>

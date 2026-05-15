@@ -50,46 +50,35 @@ const LoginCTS = () => {
     setServerError('');
 
     try {
-      // 1. Appel au service (on garde ta logique d'envoi)
-      const response = await authService.login({
-        email: formData.identifiant,
-        password: formData.password
-      });
+        const response = await authService.login({
+            email: formData.identifiant,
+            password: formData.password
+        });
 
-      
-
-      // 2. STOCKAGE DU TOKEN ET DES INFOS (Indispensable pour rester connecté)
-      // On se base sur la réponse Postman : response.data contient access_token et user
-      if (response.data && response.data.access_token) {
-        
-        localStorage.setItem('user_token', response.data.access_token);
-        localStorage.setItem('user_tokenrefsh', response.data.refresh_token);
-        localStorage.setItem('user_data', JSON.stringify(response.data.user));
-        
-        // 3. REDIRECTION DYNAMIQUE
-        // On vérifie le rôle pour diriger au bon endroit
-        const userRole = response.data.user.role; 
-        
-        
-        if (userRole === 'admin') {
-        navigate('/admin');
-        } else if (userRole === 'electeur') {
-        navigate('/voterDashboard');
+        if (response.data && response.data.access_token) {
+            localStorage.setItem('user_token', response.data.access_token);
+            localStorage.setItem('user_tokenrefsh', response.data.refresh_token);
+            localStorage.setItem('user_data', JSON.stringify(response.data.user));
+            
+            // Redirection basée sur le rôle
+            const userRole = response.data.user.role;
+            
+            if (userRole === 'admin') {
+                navigate('/admin');
+            } else if (userRole === 'electeur') {
+                navigate('/voterDashboard');
+            } else {
+                navigate('/voterDashboard');
+            }
         } else {
-        // Redirection de secours si le rôle est différent
-        navigate('/voterDashboard');
+            setServerError("Erreur : Token non reçu du serveur.");
         }
-        } else {
-        setServerError("Erreur : Token non reçu du serveur.");
-        }
-
     } catch (error) {
-      console.error("Erreur de connexion :", error);
-      // On récupère le message d'erreur précis du backend si possible
-      const errorMsg = error.response?.data?.error || error.response?.data?.message || "Identifiants incorrects.";
-      setServerError(errorMsg);
+        console.error("Erreur de connexion :", error);
+        const errorMsg = error.response?.data?.error || error.response?.data?.message || "Identifiants incorrects.";
+        setServerError(errorMsg);
     } finally {
-      setLoading(false);
+        setLoading(false);
     }
 };
 

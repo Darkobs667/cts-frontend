@@ -1,26 +1,39 @@
+// src/Components/ProtectedRoute.jsx
 import { Navigate } from 'react-router';
+import { useAuth } from '../hooks/useAuth';
 
 const ProtectedRoute = ({ children, allowedRole }) => {
-    // Synchronisation avec les clés définies dans ton authService
-    const token = localStorage.getItem('user_token');
-    const user = JSON.parse(localStorage.getItem('user_data'));
+    const { user, isAdmin, isElecteur, loading } = useAuth();
 
-    // 1. Si pas de token, on redirige vers le login
-    if (!token) {
-        console.log("Accès refusé : Aucun token trouvé.");
+    // Pendant la vérification, on affiche un loader
+    if (loading) {
+        return (
+            <div className="flex justify-center items-center h-screen">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto"></div>
+                    <p className="mt-4 text-slate-600">Vérification des accès...</p>
+                </div>
+            </div>
+        );
+    }
+
+    // Pas d'utilisateur connecté
+    if (!user) {
+        console.log("Accès refusé : Aucun utilisateur authentifié.");
         return <Navigate to="/login" replace />;
     }
 
-    // 2. Si un rôle spécifique est requis et que l'utilisateur ne l'a pas
-    if (allowedRole && user?.role !== allowedRole) {
-        console.warn(`Rôle insuffisant. Attendu: ${allowedRole}, Reçu: ${user?.role}`);
-        
-        // Sécurité pour éviter les boucles infinies : 
-        // Si un admin essaie d'aller sur une page électeur ou vice-versa
-        return user?.role === 'admin' ? <Navigate to="/admin" replace /> : <Navigate to="/voterDashboard" replace />;
+    // Vérification basée sur les données du SERVEUR, pas du localStorage
+    if (allowedRole === 'admin' && !isAdmin) {
+        console.warn(`Accès admin refusé pour ${user.email} (rôle réel: ${user.role})`);
+        return <Navigate to="/voterDashboard" replace />;
     }
 
-    // 3. Si tout est bon, on affiche la page
+    if (allowedRole === 'electeur' && !isElecteur && !isAdmin) {
+        console.warn(`Accès électeur refusé pour ${user.email}`);
+        return <Navigate to="/login" replace />;
+    }
+
     return children;
 };
 

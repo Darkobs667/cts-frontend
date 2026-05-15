@@ -5,6 +5,7 @@ import StatCard from '../Components/StatCard';
 import { Users, Vote, CheckCircle, Clock, Loader2, ArrowRight, TrendingUp, Calendar } from 'lucide-react';
 import adminService from '../services/adminService';
 import api from '../services/api';
+import { useAuth } from '../hooks/useAuth'; // ← Ajouté pour sécurité (optionnel)
 
 /* ── Stat card ── */
 const ModernStatCard = ({ label, value, icon: Icon, accent, delay }) => (
@@ -35,10 +36,8 @@ const ElectionRow = ({ election, index }) => {
         hover:bg-emerald-50/40 hover:border-emerald-100 transition-all duration-200 fade-up"
       style={{ animationDelay: `${index * 60}ms` }}
     >
-      {/* left accent */}
       <span className="absolute left-0 top-3 bottom-3 w-0.5 rounded-r-full bg-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity" />
 
-      {/* title */}
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
           <Vote size={13} className={isActive ? 'text-emerald-500' : 'text-slate-300'} />
@@ -46,7 +45,6 @@ const ElectionRow = ({ election, index }) => {
         <span className="font-black text-slate-800 text-sm leading-tight">{election.titre}</span>
       </div>
 
-      {/* status */}
       <div className="flex md:justify-start">
         {isActive ? (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[9px] font-black bg-emerald-50 text-emerald-600 border border-emerald-100">
@@ -64,17 +62,15 @@ const ElectionRow = ({ election, index }) => {
         )}
       </div>
 
-      {/* date */}
       <div className="flex items-center gap-1.5">
         <Calendar size={11} className="text-slate-300 shrink-0" />
-        <span className="text-xs font-bold text-slate-400 ">
+        <span className="text-xs font-bold text-slate-400">
           {new Date(election.date_fin).toLocaleDateString('fr-FR', {
             day: 'numeric', month: 'long', year: 'numeric',
           })}
         </span>
       </div>
 
-      {/* action */}
       <div className="md:text-right">
         <Link
           to="/votes-elections"
@@ -99,11 +95,23 @@ const Dashboard = () => {
   });
   const [recentElections, setRecentElections] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // Optionnel : pour vérifier que l'utilisateur est bien admin
+  const { isAdmin, loading: authLoading } = useAuth();
+
+  // Si l'utilisateur n'est pas admin, on ne charge rien (déjà protégé par ProtectedRoute)
+  useEffect(() => {
+    if (!authLoading && !isAdmin) {
+      console.warn("Tentative d'accès admin non autorisée");
+    }
+  }, [isAdmin, authLoading]);
 
   const fetchStats = async () => {
     try {
       const response = await adminService.getStats();
-      setStats(response.data.data);
+      if (response.data && response.data.data) {
+        setStats(response.data.data);
+      }
     } catch (error) {
       console.error("Erreur lors de la récupération des stats :", error);
     }
@@ -142,9 +150,9 @@ const Dashboard = () => {
 
   const statCards = [
     { label: 'Électeurs inscrits',    value: stats.totalInscrits.toLocaleString(), icon: Users,       accent: 'bg-emerald-500 shadow-lg shadow-emerald-100', delay: '0ms'   },
-    { label: 'Votes inactifs',        value: stats.votesClotures,                  icon: CheckCircle, accent: 'bg-blue-500 shadow-lg shadow-blue-100',    delay: '60ms'  },
+    { label: 'Votes clôturés',        value: stats.votesClotures,                  icon: CheckCircle, accent: 'bg-blue-500 shadow-lg shadow-blue-100',    delay: '60ms'  },
     { label: 'Votes en cours',        value: stats.votesEnCours,                   icon: Clock,       accent: 'bg-amber-500 shadow-lg shadow-amber-100',   delay: '120ms' },
-    { label: 'Taux de participation', value: `${stats.participation}%`,                  icon: TrendingUp,  accent: 'bg-purple-500 shadow-lg shadow-purple-100', delay: '180ms' },
+    { label: 'Taux de participation', value: `${stats.participation}%`,            icon: TrendingUp,  accent: 'bg-purple-500 shadow-lg shadow-purple-100', delay: '180ms' },
   ];
 
   return (
@@ -159,7 +167,6 @@ const Dashboard = () => {
 
       <div className="max-w-5xl mx-auto animate-in fade-in duration-500">
 
-        {/* ── header ── */}
         <div className="flex items-end justify-between mb-10 fade-up">
           <div>
             <h2 className="text-xl md:text-2xl font-[900] text-slate-900">Tableau de bord</h2>
@@ -175,19 +182,16 @@ const Dashboard = () => {
           )}
         </div>
 
-        {/* ── stat cards ── */}
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
           {statCards.map((s, i) => (
             <ModernStatCard key={i} {...s} />
           ))}
         </div>
 
-        {/* ── recent elections ── */}
         <div
           className="bg-white rounded-[36px] border border-slate-100 shadow-sm overflow-hidden fade-up"
           style={{ animationDelay: '240ms' }}
         >
-          {/* panel header */}
           <div className="px-7 py-6 border-b border-slate-50 flex items-center justify-between">
             <div>
               <h3 className="text-sm font-[900] text-slate-900">
@@ -212,7 +216,6 @@ const Dashboard = () => {
             </Link>
           </div>
 
-          {/* column labels */}
           {recentElections.length > 0 && (
             <div className="hidden md:grid grid-cols-4 px-7 py-4 text-[9px] font-black text-slate-300 tracking-widest uppercase border-b border-slate-50">
               <div>Titre de l'élection</div>
@@ -222,7 +225,6 @@ const Dashboard = () => {
             </div>
           )}
 
-          {/* rows */}
           <div className="px-2 py-2">
             {isLoading && recentElections.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
@@ -243,7 +245,6 @@ const Dashboard = () => {
               </div>
             ) : (
               <>
-                {/* mobile cards */}
                 <div className="md:hidden space-y-3 p-2">
                   {recentElections.map((election, i) => {
                     const isActive = election.statut === 'Actif';
@@ -278,7 +279,6 @@ const Dashboard = () => {
                   })}
                 </div>
 
-                {/* desktop rows */}
                 <div className="hidden md:block">
                   {recentElections.map((election, i) => (
                     <ElectionRow key={election.id} election={election} index={i} />

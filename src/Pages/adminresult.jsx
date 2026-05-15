@@ -82,7 +82,7 @@ const CandidateRow = ({ c, index, votersCount, tickPulse, isActive, hasPhysical 
         <span className="text-[11px] font-black text-slate-300 w-4 shrink-0 text-right">{index + 1}</span>
         <div className={`w-11 h-11 rounded-2xl overflow-hidden shrink-0 border-2 transition-all duration-300 ${isLeader ? 'border-emerald-400' : 'border-slate-100'}`}>
           {c.photo_path ? (
-            <img src={`${import.meta.env.VITE_STORAGE_URL}/${c.photo_path}`} className="w-full h-full object-cover" alt={c.name} />
+            <img src={c.photo_path} className="w-full h-full object-cover" alt={c.name} />
           ) : (
             <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300"><User size={16} /></div>
           )}
@@ -203,7 +203,7 @@ const ElectionCard = ({ election, totalInscritsGlobaux, onClose, onPhysicalSaved
               <div className="flex items-center gap-2.5 bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-2 shadow-sm">
                 <div className="w-8 h-8 rounded-xl overflow-hidden ring-2 ring-emerald-400 shrink-0">
                   {leader.photo_path ? (
-                    <img src={`${import.meta.env.VITE_STORAGE_URL}/${leader.photo_path}`} className="w-full h-full object-cover" alt={leader.name} />
+                    <img src={leader.photo_path} className="w-full h-full object-cover" alt={leader.name} />
                   ) : (
                     <div className="w-full h-full bg-slate-100 flex items-center justify-center"><User size={14} className="text-slate-400" /></div>
                   )}
@@ -292,7 +292,7 @@ const ElectionCard = ({ election, totalInscritsGlobaux, onClose, onPhysicalSaved
                 <div key={c.id} className="flex items-center gap-4 bg-white rounded-2xl px-4 py-3 border border-amber-100">
                   <div className="w-8 h-8 rounded-xl overflow-hidden bg-slate-100 shrink-0">
                     {c.photo_path
-                      ? <img src={`${import.meta.env.VITE_STORAGE_URL}/${c.photo_path}`} className="w-full h-full object-cover" alt={c.name} />
+                      ? <img src={c.photo_path} className="w-full h-full object-cover" alt={c.name} />
                       : <div className="w-full h-full flex items-center justify-center"><User size={14} className="text-slate-300" /></div>
                     }
                   </div>

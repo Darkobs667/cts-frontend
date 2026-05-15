@@ -1,6 +1,6 @@
 /**
  * Retourne l'URL complète d'une photo candidat.
- * Supporte base64 (data URI) et les anciens chemins relatifs.
+ * photo_path est soit une data URI base64, soit un chemin relatif storage.
  */
 export const getPhotoUrl = (photoPath) => {
     if (!photoPath) return null;

@@ -1,23 +1,16 @@
 import api from './api';
 
 const adminService = {
-    getStats: async () => {
-        return await api.get('/admin/stats-globales');
-    },
+    getStats: () => api.get('/admin/stats-globales'),
+    getParticipationByPosition: () => api.get('/admin/participation-by-position'),
+    getExpiringPositions: () => api.get('/admin/expiring-positions'),
+    togglePosition: (id) => api.patch(`/admin/positions/${id}/toggle`),
 
-    createPosition: async (data) => {
-        return await api.post('/positions', data);
-    },
-
-    updatePosition: async (id, data) => {
-        return await api.put(`/positions/${id}`, data);
-    },
-
-    addCandidat: async (formData) => {
-        return await api.post('/candidates', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        });
-    }
+    createPosition: (data) => api.post('/positions', data),
+    updatePosition: (id, data) => api.put(`/positions/${id}`, data),
+    addCandidat: (formData) => api.post('/candidates', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    }),
 };
 
 export default adminService;

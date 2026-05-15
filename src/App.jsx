@@ -15,6 +15,8 @@ import ProtectedRoute from "./Components/ProtectedRoute.jsx";
 import ElecteurScrutins from "./Pages/ElecteurScrutins.jsx";
 import VoterResults from './Pages/VoterResults.jsx';
 
+import VoterReceiptPublic from './Pages/VoterReceiptPublic.jsx';
+
 function App() {
   return (
     <Routes>
@@ -23,6 +25,9 @@ function App() {
       <Route path="/login" element={<LoginCTS />} />
       <Route path="/signup" element={<SignUp />} />
       
+      {/* --- ROUTE PUBLIQUE REÇU PARTAGEABLE --- */}
+      <Route path="/receipt/:ref" element={<VoterReceiptPublic />} />
+
       {/* --- ROUTES ÉLECTEURS (Protégées par rôle 'electeur') --- */}
       <Route path="/voterDashboard" element={
         <ProtectedRoute allowedRole="electeur">

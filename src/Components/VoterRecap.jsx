@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import VoterLayout from "../Components/VoterLayout";
 import Toast from '../Components/Toast';
 import { useLocation, useNavigate } from "react-router";
-import { ShieldCheck, ArrowLeft, Send, CheckCircle, User, Lock, Share2, Copy, Check, ImageDown } from 'lucide-react';
+import { ShieldCheck, ArrowLeft, Send, CheckCircle, User, Lock, Share2, ImageDown } from 'lucide-react';
 import api from '../services/api';
 import confetti from 'canvas-confetti';
 import { getConnectedUser } from '../utils/userHelper';
@@ -70,6 +70,10 @@ const VoteCard = React.forwardRef(({ voteRef, electionTitle, candidateName, vote
         <div className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3">
           <p className="text-[8px] font-black text-slate-500 tracking-widest uppercase mb-1">Scrutin</p>
           <p className="text-sm font-black text-white leading-tight">{electionTitle}</p>
+        </div>
+        <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl px-4 py-3">
+          <p className="text-[8px] font-black text-emerald-500/70 tracking-widest uppercase mb-1">Vote pour</p>
+          <p className="text-sm font-black text-emerald-300 leading-tight">{candidateName}</p>
         </div>
         <div className="grid grid-cols-2 gap-2.5">
           <div className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3">
@@ -143,6 +147,7 @@ const VoterRecap = () => {
   }
 
   const handleFinalConfirm = async () => {
+    if (loading) return;
     setLoading(true);
     try {
       const position_id = election.id;
@@ -150,7 +155,11 @@ const VoterRecap = () => {
       const res = await api.post('/votes', { position_id, candidate_id });
       const id = res.data?.data?.id;
       if (!id) throw new Error("Référence de vote introuvable.");
-      setVoteRef('CTS-' + id.toString(36).toUpperCase().padStart(8, '0'));
+      // Récupérer la ref exacte depuis le backend (md5 calculé côté serveur)
+      const myVotesRes = await api.get('/votes/my');
+      const myVotes = Array.isArray(myVotesRes.data) ? myVotesRes.data : [];
+      const thisVote = myVotes.find(v => v.id === id);
+      setVoteRef(thisVote?.transaction_ref || 'CTS-' + String(id).padStart(8, '0'));
       setIsSubmitted(true);
     } catch (error) {
       const message = error.response?.data?.message || "Erreur lors de l'enregistrement du vote.";
@@ -164,10 +173,12 @@ const VoterRecap = () => {
     setSharing(true);
     try {
       const canvas = await html2canvas(cardRef.current, {
-        backgroundColor: null,
+        backgroundColor: '#0f172a',
         scale: 2,
         useCORS: true,
+        allowTaint: true,
         logging: false,
+        imageTimeout: 0,
       });
 
       canvas.toBlob(async (blob) => {

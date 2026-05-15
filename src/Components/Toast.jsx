@@ -5,7 +5,7 @@ const Toast = ({ message, type = 'success', onClose }) => {
     useEffect(() => {
         const t = setTimeout(onClose, 3500);
         return () => clearTimeout(t);
-    }, [onClose]);
+    }, []); // eslint-disable-line react-hooks/exhaustive-deps — onClose est stable via le parent
 
     return (
         <div className={`fixed bottom-6 right-6 z-[999] flex items-center gap-3 px-5 py-4 rounded-2xl shadow-xl border animate-in slide-in-from-bottom-4 duration-300

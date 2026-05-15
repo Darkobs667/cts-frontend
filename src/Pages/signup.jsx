@@ -13,7 +13,10 @@ const SignUp = () => {
     const [browserId, setBrowserId] = useState('');
 
     useEffect(() => {
-        FingerprintJS.load().then(fp => fp.get()).then(result => setBrowserId(result.visitorId));
+        FingerprintJS.load()
+            .then(fp => fp.get())
+            .then(result => setBrowserId(result.visitorId))
+            .catch(() => setBrowserId('fallback-' + Date.now()));
     }, []);
 
     const [formData, setFormData] = useState({ prenom: '', nom: '', email: '', password: '' });

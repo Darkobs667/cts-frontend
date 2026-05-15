@@ -1,7 +1,8 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import VoterLayout from '../Components/VoterLayout';
-import { User, Trophy, Vote, TrendingUp, RefreshCw } from 'lucide-react';
+import { User, Trophy, Vote, TrendingUp } from 'lucide-react';
 import api from '../services/api';
+import { getPhotoUrl } from '../utils/userHelper';
 
 const AnimatedBar = ({ pct, isWinner }) => {
   const [width, setWidth] = useState(0);
@@ -19,7 +20,7 @@ const AnimatedBar = ({ pct, isWinner }) => {
   );
 };
 
-const ResultCard = ({ election, index }) => {
+const ResultCard = ({ election, index, myVotedCandidate }) => {
     const sorted = [...(election.candidates || [])].sort((a, b) => b.votes_count - a.votes_count);
     const total = election.total_votes || 0;
     const winner = sorted[0];
@@ -66,7 +67,7 @@ const ResultCard = ({ election, index }) => {
                             <div className="flex items-center gap-3 mb-1.5">
                                 <div className={`w-9 h-9 rounded-xl overflow-hidden shrink-0 border-2 ${isWinner ? 'border-emerald-400' : 'border-slate-100'}`}>
                                     {c.photo_path ? (
-                                        <img src={`${import.meta.env.VITE_STORAGE_URL}/${c.photo_path}`} className="w-full h-full object-cover" alt={c.name} />
+                                        <img src={getPhotoUrl(c.photo_path)} className="w-full h-full object-cover" alt={c.name} />
                                     ) : (
                                         <div className="w-full h-full bg-slate-100 flex items-center justify-center">
                                             <User size={14} className="text-slate-300" />
@@ -74,6 +75,9 @@ const ResultCard = ({ election, index }) => {
                                     )}
                                 </div>
                                 <span className={`flex-1 text-sm font-[900] ${isWinner ? 'text-emerald-700' : 'text-slate-700'}`}>{c.name}</span>
+                                {myVotedCandidate && myVotedCandidate.trim().toLowerCase() === c.name.trim().toLowerCase() && (
+                                    <span className="text-[8px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-lg shrink-0">Mon vote</span>
+                                )}
                                 <span className={`text-sm font-black tabular-nums ${isWinner ? 'text-emerald-600' : 'text-slate-400'}`}>{pct}%</span>
                             </div>
                         <AnimatedBar pct={pct} isWinner={isWinner} />
@@ -92,18 +96,25 @@ const ResultCard = ({ election, index }) => {
 const VoterResults = () => {
     const [loading, setLoading] = useState(true);
     const [results, setResults] = useState([]);
+    const [myVotedCandidates, setMyVotedCandidates] = useState({});
 
     useEffect(() => {
-        api.get('/votes/results')
-            .then(res => {
-                const data = res.data?.data || [];
-                const closed = Array.isArray(data)
-                    ? data.filter(e => e.is_active === false || e.is_active === 0)
-                    : [];
-                setResults(closed);
-            })
-            .catch(err => console.error('Erreur résultats:', err))
-            .finally(() => setLoading(false));
+        Promise.all([
+            api.get('/votes/results'),
+            api.get('/votes/my'),
+        ]).then(([resResults, resMyVotes]) => {
+            const data = resResults.data?.data || [];
+            const closed = Array.isArray(data) ? data.filter(e => !e.is_active) : [];
+            setResults(closed);
+
+            // map position_id -> candidate_id pour marquer le choix de l'électeur
+            const myVotes = Array.isArray(resMyVotes.data) ? resMyVotes.data : [];
+            const map = {};
+            myVotes.forEach(v => { if (v.position_id) map[v.position_id] = v.candidate_name; });
+            setMyVotedCandidates(map);
+        })
+        .catch(err => console.error('Erreur résultats:', err))
+        .finally(() => setLoading(false));
     }, []);
 
     return (
@@ -143,7 +154,7 @@ const VoterResults = () => {
                 ) : (
                     <div className="flex flex-col gap-5">
                         {results.map((election, i) => (
-                            <ResultCard key={election.id} election={election} index={i} />
+                            <ResultCard key={election.id} election={election} index={i} myVotedCandidate={myVotedCandidates[election.id]} />
                         ))}
                     </div>
                 )}

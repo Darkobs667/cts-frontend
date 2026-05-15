@@ -110,6 +110,7 @@ const Candidats = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (saving) return;
     if (!form.user_id || !form.position_id) {
       setFormError('Veuillez sélectionner un électeur et un poste.');
       return;
@@ -119,11 +120,9 @@ const Candidats = () => {
     const payload = new FormData();
     payload.append('user_id', form.user_id);
     payload.append('position_id', form.position_id);
-    payload.append('slogan', form.slogan || '');
-    payload.append('bio', form.bio || '');
-    if (form.photo) {
-      payload.append('photo', form.photo);
-    }
+    if (form.slogan) payload.append('slogan', form.slogan);
+    if (form.bio)    payload.append('bio', form.bio);
+    if (form.photo)  payload.append('photo', form.photo);
 
     try {
       setSaving(true);
@@ -138,7 +137,10 @@ const Candidats = () => {
       fetchCandidats();
     } catch (error) {
       console.error(error);
-      const msg = error.response?.data?.message || "Erreur lors de l'enregistrement.";
+      const errData = error.response?.data;
+      const msg = errData?.message
+        || (errData?.errors ? Object.values(errData.errors).flat().join(' ') : null)
+        || "Erreur lors de l'enregistrement.";
       setToast({ message: msg, type: 'error' });
     } finally {
       setSaving(false);
@@ -190,8 +192,9 @@ const Candidats = () => {
       {showModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
           <div className="bg-white w-full max-w-3xl rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 flex flex-col max-h-[90vh]">
+            <form onSubmit={handleSubmit} className="flex flex-col flex-1 overflow-hidden">
             {/* Header */}
-            <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
+            <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50 shrink-0">
               <div>
                 <h3 className="text-xl font-[900] text-slate-900">
                   {editingCandidate ? 'Modifier le candidat' : 'Ajouter un candidat'}
@@ -201,6 +204,7 @@ const Candidats = () => {
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => setShowModal(false)}
                 className="p-3 hover:bg-white rounded-2xl transition-all text-slate-300 hover:text-red-500 shadow-sm"
               >
@@ -208,7 +212,7 @@ const Candidats = () => {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-8 overflow-y-auto custom-scrollbar flex flex-col gap-8">
+            <div className="p-8 overflow-y-auto custom-scrollbar flex flex-col gap-8 flex-1">
               {formError && (
                 <div className="bg-red-50 border border-red-100 text-red-500 text-xs font-bold rounded-2xl px-4 py-3">
                   {formError}
@@ -310,10 +314,10 @@ const Candidats = () => {
                   )}
                 </div>
               </div>
-            </form>
+            </div>
 
             {/* Footer */}
-            <div className="p-8 bg-white border-t border-slate-50 flex gap-4">
+            <div className="p-8 bg-white border-t border-slate-50 flex gap-4 shrink-0">
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
@@ -323,7 +327,6 @@ const Candidats = () => {
               </button>
               <button
                 type="submit"
-                onClick={handleSubmit}
                 disabled={saving}
                 className="flex-1 bg-emerald-500 py-5 rounded-[24px] text-white font-[900] text-[11px] shadow-xl shadow-emerald-100 flex items-center justify-center gap-3 hover:bg-emerald-600 hover:-translate-y-1 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
               >
@@ -337,6 +340,7 @@ const Candidats = () => {
                 {editingCandidate ? 'Enregistrer les modifications' : 'Ajouter le candidat'}
               </button>
             </div>
+            </form>
           </div>
         </div>
       )}

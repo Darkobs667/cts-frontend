@@ -71,7 +71,7 @@ const CreateElectionModal = ({ close, initialData = null }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-8 overflow-y-auto flex flex-col gap-6">
+        <form onSubmit={handleSubmit} className="p-8 overflow-y-auto flex flex-col gap-6 flex-1">
           {error && (
             <div className="bg-red-50 border border-red-100 text-red-500 text-xs font-bold rounded-2xl px-4 py-3">
               {error}
@@ -120,12 +120,13 @@ const CreateElectionModal = ({ close, initialData = null }) => {
           <button type="button" onClick={close} className="flex-1 py-4 font-black text-slate-400 text-[10px] hover:text-slate-600 transition-colors">
             Annuler
           </button>
-          <button onClick={handleSubmit} disabled={loading}
+          <button type="submit" disabled={loading}
             className="flex-1 bg-emerald-500 py-5 rounded-[24px] text-white font-[900] text-[11px] shadow-xl shadow-emerald-100 flex items-center justify-center gap-3 hover:bg-emerald-600 transition-all active:scale-95 disabled:opacity-70">
             {loading ? <Loader2 size={18} className="animate-spin" /> : isEditing ? <Save size={18} /> : <CheckCircle2 size={18} />}
             {loading ? 'Enregistrement...' : isEditing ? 'Modifier le scrutin' : 'Enregistrer le poste'}
           </button>
         </div>
+        </form>
       </div>
     </div>
   );

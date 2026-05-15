@@ -15,6 +15,11 @@ api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('user_token');
         if (token) config.headers.Authorization = `Bearer ${token}`;
+        // Si c'est un FormData, supprimer le Content-Type pour qu'axios
+        // génère automatiquement le bon multipart/form-data avec boundary
+        if (config.data instanceof FormData) {
+            delete config.headers['Content-Type'];
+        }
         return config;
     },
     (error) => Promise.reject(error)

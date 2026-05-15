@@ -36,7 +36,16 @@ const VoterProfile = () => {
         }
       })
       .catch(() => {/* garder les données du cache */})
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        // Sécurité : si userData toujours null après l'API, forcer un fallback
+        setUserData(prev => prev ?? {
+          nom: 'Utilisateur',
+          email: '',
+          uid: 'CTS-00000',
+          initials: '??',
+        });
+      });
   }, []);
 
   return (

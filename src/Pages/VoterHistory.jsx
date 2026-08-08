@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import VoterLayout from "../Components/VoterLayout";
-import { ShieldCheck, Download, History, RefreshCw, CheckCircle2, Clock, Hash } from 'lucide-react';
+import { ShieldCheck, Download, History, RefreshCw, CheckCircle2, Clock, Hash, CalendarDays, ReceiptText } from 'lucide-react';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 /* ── Animated counter ── */
 const AnimatedNumber = ({ value, duration = 700 }) => {
@@ -39,86 +40,32 @@ const VoteCard = ({ v, index, onDownload }) => {
   });
 
   return (
-    <div
-      className="group bg-white rounded-3xl border border-slate-100 shadow-sm
-        hover:shadow-md hover:border-emerald-100 transition-all duration-300
-        overflow-hidden fade-up"
-      style={{ animationDelay: `${index * 70}ms` }}
-    >
-      {/* top accent on hover */}
-      <div className="h-0.5 w-0 group-hover:w-full bg-gradient-to-r from-emerald-400 to-teal-400
-        transition-all duration-500 rounded-full" />
-
-      <div className="p-5 md:p-6 flex flex-col md:flex-row md:items-center gap-4 md:gap-6">
-
-        {/* index */}
-        <div className="w-9 h-9 rounded-2xl bg-slate-50 border border-slate-100
-          flex items-center justify-center shrink-0">
-          <span className="text-[10px] font-black text-slate-300">
-            {index + 1 < 10 ? `0${index + 1}` : index + 1}
-          </span>
-        </div>
-
-        {/* election info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 mb-1">
-            <CheckCircle2 size={11} className="text-emerald-500 shrink-0" />
-            <span className="text-[9px] font-black text-emerald-600 tracking-widest uppercase">
-              Vote enregistré
-            </span>
+    <article className="group relative overflow-hidden rounded-[28px] border border-emerald-100/80 bg-white shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-xl hover:shadow-emerald-950/5 fade-up" style={{ animationDelay: `${index * 70}ms` }}>
+      <div className="absolute bottom-0 left-0 top-0 w-1.5 bg-gradient-to-b from-emerald-300 via-emerald-500 to-emerald-700" />
+      <div className="p-5 pl-6 sm:p-6 sm:pl-7">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
+          <div className="flex min-w-0 flex-1 items-start gap-4">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-emerald-100 bg-emerald-50 text-emerald-600">
+              <span className="text-[11px] font-black tabular-nums">{String(index + 1).padStart(2, '0')}</span>
+            </div>
+            <div className="min-w-0">
+              <div className="mb-1.5 flex items-center gap-2"><span className="flex h-5 w-5 items-center justify-center rounded-lg bg-emerald-500 text-white"><CheckCircle2 size={12} strokeWidth={3} /></span><span className="text-[9px] font-black uppercase tracking-[0.15em] text-emerald-600">Participation certifiée</span></div>
+              <h3 className="truncate text-base font-black text-slate-900">{v.election_title}</h3>
+              <p className="mt-1 text-[11px] font-medium text-slate-400">Bulletin scellé dans le registre CTS</p>
+            </div>
           </div>
-          <h3 className="font-[900] text-slate-900 text-sm md:text-base truncate leading-tight">
-            {v.election_title}
-          </h3>
-        </div>
 
-        {/* date */}
-        <div className="hidden md:flex items-center gap-1.5 shrink-0">
-          <Clock size={11} className="text-slate-300" />
-          <span className="text-xs font-bold text-slate-400 italic">{formattedDate}</span>
-        </div>
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 lg:flex lg:items-center">
+            <div className="rounded-2xl border border-slate-100 bg-slate-50 px-3 py-2.5"><span className="flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-slate-400"><CalendarDays size={10} /> Date</span><span className="mt-1 block text-[11px] font-bold text-slate-700">{formattedDate}</span></div>
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 px-3 py-2.5"><span className="flex items-center gap-1 text-[8px] font-black uppercase tracking-wider text-emerald-600"><Hash size={10} /> Référence</span><code className="mt-1 block text-[10px] font-black tracking-wide text-emerald-800">{v.transaction_ref}</code></div>
+          </div>
 
-        {/* ref */}
-        <div className="hidden lg:flex items-center gap-1.5 shrink-0">
-          <Hash size={10} className="text-slate-300" />
-          <code className="bg-slate-900 text-[10px] px-3 py-1.5 rounded-xl font-bold
-            text-emerald-400 border border-slate-800 tracking-wider">
-            {v.transaction_ref}
-          </code>
+          <button onClick={handleClick} disabled={downloading} className="flex shrink-0 items-center justify-center gap-2 rounded-2xl bg-emerald-600 px-4 py-3 text-[10px] font-black text-white shadow-lg shadow-emerald-500/20 transition hover:-translate-y-0.5 hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-wait disabled:opacity-60">
+            {downloading ? <RefreshCw size={14} className="animate-spin" /> : <Download size={14} />} {downloading ? 'Préparation…' : 'Télécharger le reçu'}
+          </button>
         </div>
-
-        {/* download */}
-        <button
-          onClick={handleClick}
-          disabled={downloading}
-          className="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-2xl text-[10px] font-black
-            border border-slate-100 bg-white text-slate-600 shadow-sm
-            hover:bg-emerald-500 hover:text-white hover:border-emerald-500
-            active:scale-95 transition-all duration-200 disabled:opacity-50 disabled:cursor-wait
-            self-start md:self-auto"
-        >
-          {downloading
-            ? <RefreshCw size={13} className="animate-spin" />
-            : <Download size={13} />
-          }
-          <span className="hidden sm:inline">
-            {downloading ? 'Génération…' : 'Obtenir le reçu'}
-          </span>
-        </button>
       </div>
-
-      {/* mobile: date + ref row */}
-      <div className="md:hidden px-5 pb-4 flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-1.5">
-          <Clock size={10} className="text-slate-300" />
-          <span className="text-[10px] font-bold text-slate-400 italic">{formattedDate}</span>
-        </div>
-        <code className="bg-slate-900 text-[9px] px-2.5 py-1 rounded-lg font-bold
-          text-emerald-400 border border-slate-800 tracking-wider">
-          {v.transaction_ref}
-        </code>
-      </div>
-    </div>
+    </article>
   );
 };
 
@@ -154,7 +101,8 @@ const VoterHistory = () => {
       document.body.appendChild(link);
       link.click();
     } catch (error) {
-      alert("Impossible de générer le reçu pour le moment.", error);
+      toast.error('Impossible de générer le reçu pour le moment.');
+      console.error(error);
     }
   };
 
@@ -188,37 +136,16 @@ const VoterHistory = () => {
         <div className="animate-in fade-in duration-500 pb-20 max-w-4xl mx-auto">
 
           {/* ── header ── */}
-          <div className="mb-8 fade-up flex flex-col md:flex-row md:items-end md:justify-between gap-5">
-            <div>
-              <h1 className="text-xl md:text-2xl font-[900] text-slate-900 flex items-center gap-3">
-                Mes Participations
-                {isSyncing && <RefreshCw size={15} className="animate-spin text-emerald-500" />}
-              </h1>
-              <p className="text-slate-400 font-bold mt-1 text-xs">
-                Preuves de vote stockées sur la plateforme sécurisée
-              </p>
+          <section className="mb-7 overflow-hidden rounded-[34px] border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-white p-6 sm:p-8 fade-up">
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-start gap-4"><div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-500/25"><ReceiptText size={22} /></div><div><p className="text-[9px] font-black uppercase tracking-[0.18em] text-emerald-600">Registre personnel</p><h1 className="mt-1 text-xl font-black text-emerald-950 sm:text-2xl">Mes votes enregistrés</h1><p className="mt-1 text-xs font-medium text-emerald-900/65">Consultez et téléchargez vos preuves de participation.</p></div></div>
+              <div className="flex items-center gap-3 self-start"><div className="rounded-2xl border border-emerald-100 bg-white px-4 py-3 text-right shadow-sm"><span className="block text-2xl font-black leading-none text-emerald-600 tabular-nums"><AnimatedNumber value={votes.length} /></span><span className="mt-1 block text-[8px] font-black uppercase tracking-widest text-emerald-700">Vote{votes.length !== 1 ? 's' : ''}</span></div><button type="button" onClick={() => fetchHistory(true)} disabled={isSyncing} className="flex h-11 w-11 items-center justify-center rounded-2xl border border-emerald-100 bg-white text-emerald-600 shadow-sm transition hover:bg-emerald-50 disabled:opacity-60" aria-label="Actualiser le registre"> <RefreshCw size={16} className={isSyncing ? 'animate-spin' : ''} /></button></div>
             </div>
-
-            {/* counter chip */}
-            <div className="flex items-center gap-4 bg-white px-5 py-4 rounded-3xl
-              border border-slate-100 shadow-sm soft-glow self-start md:self-auto">
-              <div className="text-right">
-                <span className="text-3xl font-[900] text-emerald-500 leading-none tabular-nums">
-                  <AnimatedNumber value={votes.length} />
-                </span>
-                <p className="text-[8px] font-black text-slate-300 mt-1 tracking-widest uppercase">
-                  Actions
-                </p>
-              </div>
-              <div className="w-10 h-10 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-500">
-                <History size={20} />
-              </div>
-            </div>
-          </div>
+          </section>
 
           {/* ── list ── */}
           {votes.length > 0 ? (
-            <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-4">
               {votes.map((v, i) => (
                 <VoteCard key={v.id} v={v} index={i} onDownload={handleDownloadReceipt} />
               ))}

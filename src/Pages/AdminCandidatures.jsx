@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../Components/AdminLayout';
 import { Loader2, User, XCircle, CheckCircle2, AlertTriangle, Search } from 'lucide-react';
 import api from '../services/api';
+import { candidatePhotoUrl } from '../utils/media';
+import toast from 'react-hot-toast';
 
 const AdminCandidatures = () => {
   const [candidatures, setCandidatures] = useState([]);
@@ -19,7 +21,7 @@ const AdminCandidatures = () => {
           user_nom: c.user ? `${c.user.first_name} ${c.user.last_name}`.trim() : `Utilisateur #${c.user_id}`,
           position_titre: c.position?.title ?? 'Poste inconnu',
           position_id: c.position_id,
-          photo_url: c.photo_path ? `${import.meta.env.VITE_STORAGE_URL}/${c.photo_path}` : null,
+          photo_url: candidatePhotoUrl(c.photo_url || c.photo_path),
         }));
         setCandidatures(data);
       }
@@ -40,9 +42,10 @@ const AdminCandidatures = () => {
       await api.put(`/candidates/${id}/${action}`);
       // Retirer de la liste locale ou recharger
       setCandidatures(prev => prev.filter(c => c.id !== id));
+      toast.success(action === 'approve' ? 'Candidature approuvée.' : 'Candidature refusée.');
     } catch (error) {
       console.error('Erreur action candidature', error);
-      alert('Erreur lors du traitement de la demande.');
+      toast.error(error.response?.data?.message || 'Erreur lors du traitement de la demande.');
     } finally {
       setProcessing(prev => ({ ...prev, [id]: false }));
     }

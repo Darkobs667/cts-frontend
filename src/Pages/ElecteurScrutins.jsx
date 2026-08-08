@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import VoterLayout from "../Components/VoterLayout";
 import { ChevronDown, ChevronUp, Loader2, User, Vote, FilePlus, X, Camera, CheckCircle2, AlertCircle } from 'lucide-react';
 import api from '../services/api';
+import { candidatePhotoUrl } from '../utils/media';
+import toast from 'react-hot-toast';
 
 const ElecteurScrutins = () => {
   const [loading, setLoading] = useState(true);
@@ -44,7 +46,7 @@ const ElecteurScrutins = () => {
           nom: c.user ? `${c.user.first_name ?? ''} ${c.user.last_name ?? ''}`.trim() : `Utilisateur #${c.user_id}`,
           role: c.user?.role || 'electeur',
           slogan: c.slogan || c.bio || 'Pas de profession de foi',
-          photo: c.photo_path ? `${import.meta.env.VITE_STORAGE_URL}/${c.photo_path}` : null,
+          photo: candidatePhotoUrl(c.photo_url || c.photo_path),
         }));
         setCandidatesByPos(prev => ({ ...prev, [positionId]: formatted }));
       } catch (error) {
@@ -81,10 +83,10 @@ const ElecteurScrutins = () => {
       const res = await api.post('/apply', payload, { headers: { 'Content-Type': 'multipart/form-data' } });
       setApplicationStatus(prev => ({ ...prev, [applyPosition.id]: 'submitted' }));
       setShowApplyModal(false);
-      alert(res.data.message || 'Candidature envoyée avec succès');
+      toast.success(res.data.message || 'Candidature envoyée avec succès');
     } catch (error) {
       const message = error.response?.data?.message || "Erreur lors de l'envoi";
-      alert(message);
+      toast.error(message);
       if (error.response?.status === 409) {
         setApplicationStatus(prev => ({ ...prev, [applyPosition.id]: 'exists' }));
         setShowApplyModal(false);
@@ -292,25 +294,26 @@ const ElecteurScrutins = () => {
 
       {/* ── apply modal ── */}
       {showApplyModal && applyPosition && (
-        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center
-          p-0 sm:p-4 bg-slate-900/60 backdrop-blur-sm">
-          <div className="bg-white w-full sm:max-w-lg rounded-t-[32px] sm:rounded-3xl shadow-2xl
-            modal-in flex flex-col max-h-[92vh] sm:max-h-[85vh]">
+        <div className="app-modal-backdrop animate-in fade-in duration-200" role="dialog" aria-modal="true" aria-label="Déposer une candidature">
+          <div className="app-modal-panel max-w-lg modal-in flex flex-col max-h-[92vh]">
 
             {/* modal header */}
-            <div className="px-6 py-5 border-b border-slate-50 flex items-center justify-between shrink-0">
+            <div className="px-7 py-6 border-b border-emerald-100 flex items-start justify-between shrink-0 bg-gradient-to-br from-emerald-100 to-white">
               <div>
-                <h3 className="text-sm font-[900] text-slate-900">
-                  Postuler — <span className="text-emerald-600">{applyPosition.title}</span>
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-emerald-700">
+                  Candidature
+                </span>
+                <h3 className="mt-3 text-lg font-[900] text-emerald-950">
+                  {applyPosition.title}
                 </h3>
-                <p className="text-[9px] font-black text-slate-400 mt-0.5 tracking-wide">
-                  Remplissez votre profession de foi
+                <p className="text-xs font-medium text-emerald-800/70 mt-1">
+                  Présentez votre projet aux électeurs. Votre profil restera privé jusqu’à validation.
                 </p>
               </div>
               <button
                 onClick={() => setShowApplyModal(false)}
-                className="w-9 h-9 flex items-center justify-center rounded-2xl bg-slate-50
-                  border border-slate-100 text-slate-400 hover:bg-red-50 hover:text-red-400
+                className="w-10 h-10 flex items-center justify-center rounded-2xl bg-white
+                  border border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-950
                   transition-all"
               >
                 <X size={16} />
@@ -318,61 +321,55 @@ const ElecteurScrutins = () => {
             </div>
 
             {/* modal body */}
-            <div className="px-6 py-5 overflow-y-auto flex flex-col gap-5 flex-1">
+            <div className="px-7 py-6 overflow-y-auto flex flex-col gap-5 flex-1">
 
               {/* slogan */}
               <div>
-                <label className="text-[9px] font-black text-slate-400 tracking-widest uppercase block mb-2 ml-0.5">
-                  Slogan de campagne *
+                <label className="modal-label">
+                  Slogan de campagne
                 </label>
                 <input
                   required
                   value={form.slogan}
                   onChange={(e) => setForm({ ...form, slogan: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3.5
-                    font-medium text-sm text-slate-700 placeholder:text-slate-300
-                    focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:bg-white
-                    transition-all"
+                  className="modal-field"
                   placeholder="Votre slogan phare…"
                 />
               </div>
 
               {/* bio */}
               <div>
-                <label className="text-[9px] font-black text-slate-400 tracking-widest uppercase block mb-2 ml-0.5">
+                <label className="modal-label">
                   Bio / Présentation
                 </label>
                 <textarea
                   value={form.bio}
                   onChange={(e) => setForm({ ...form, bio: e.target.value })}
                   rows={3}
-                  className="w-full bg-slate-50 border border-slate-100 rounded-2xl px-4 py-3.5
-                    font-medium text-sm text-slate-700 placeholder:text-slate-300
-                    focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:bg-white
-                    transition-all resize-none"
+                  className="modal-field resize-none"
                   placeholder="Présentez-vous en quelques mots…"
                 />
               </div>
 
               {/* photo */}
               <div>
-                <label className="text-[9px] font-black text-slate-400 tracking-widest uppercase block mb-2 ml-0.5">
+                <label className="modal-label">
                   Photo (optionnelle)
                 </label>
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/50 p-3">
                   <div
                     onClick={() => document.getElementById('apply-photo').click()}
-                    className="w-18 h-18 w-[72px] h-[72px] rounded-2xl bg-slate-50 border-2 border-dashed
-                      border-slate-200 flex flex-col items-center justify-center cursor-pointer
-                      overflow-hidden hover:border-emerald-400 hover:bg-emerald-50/30
+                    className="w-18 h-18 w-[72px] h-[72px] rounded-2xl bg-white border-2 border-dashed
+                      border-emerald-200 flex flex-col items-center justify-center cursor-pointer
+                      overflow-hidden hover:border-emerald-400 hover:bg-emerald-50
                       transition-all shrink-0"
                   >
                     {form.preview ? (
                       <img src={form.preview} className="w-full h-full object-cover" alt="Preview" />
                     ) : (
                       <>
-                        <Camera size={20} className="text-slate-300 mb-1" />
-                        <span className="text-[8px] font-black text-slate-300 uppercase">Ajouter</span>
+                        <Camera size={20} className="text-emerald-500 mb-1" />
+                        <span className="text-[8px] font-black text-emerald-600 uppercase">Ajouter</span>
                       </>
                     )}
                   </div>
@@ -387,7 +384,7 @@ const ElecteurScrutins = () => {
                     <button
                       type="button"
                       onClick={() => setForm({ ...form, photo: null, preview: null })}
-                      className="text-[11px] font-black text-red-400 hover:text-red-500 transition-colors"
+                      className="text-[11px] font-black text-emerald-700 hover:text-emerald-950 transition-colors"
                     >
                       Supprimer
                     </button>
@@ -397,22 +394,18 @@ const ElecteurScrutins = () => {
             </div>
 
             {/* modal footer */}
-            <div className="px-6 py-5 border-t border-slate-50 flex gap-3 shrink-0">
+            <div className="px-7 py-5 border-t border-emerald-100 bg-emerald-50/40 flex gap-3 shrink-0">
               <button
                 type="button"
                 onClick={() => setShowApplyModal(false)}
-                className="flex-1 py-3.5 rounded-2xl text-[11px] font-black text-slate-400
-                  bg-slate-50 border border-slate-100 hover:bg-slate-100 transition-all active:scale-[0.98]"
+                className="modal-secondary-action flex-1"
               >
                 Annuler
               </button>
               <button
                 onClick={handleSubmitApplication}
                 disabled={submitting || !form.slogan}
-                className="flex-[2] py-3.5 rounded-2xl text-sm font-[900] text-white
-                  bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-100
-                  flex items-center justify-center gap-2
-                  active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                className="modal-primary-action flex-[2] text-sm flex items-center justify-center gap-2"
               >
                 {submitting
                   ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Envoi…</>

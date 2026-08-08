@@ -1,89 +1,76 @@
-// src/hooks/useAuth.js
-import { useState, useEffect, useCallback } from 'react';
+import { createContext, createElement, useCallback, useContext, useEffect, useState } from 'react';
 import api from '../services/api';
 
+const AuthContext = createContext(null);
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [role, setRole] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const clearSession = useCallback(() => {
+    localStorage.removeItem('user_token');
+    localStorage.removeItem('user_tokenrefsh');
+    localStorage.removeItem('user_id');
+    setUser(null);
+    setRole(null);
+  }, []);
+
+  const refreshUser = useCallback(async () => {
+    const token = localStorage.getItem('user_token');
+    if (!token) {
+      clearSession();
+      setLoading(false);
+      return null;
+    }
+
+    setLoading(true);
+    try {
+      const response = await api.get('/auth/me');
+      const userData = response.data?.user ?? null;
+      if (!userData) throw new Error('Session invalide');
+
+      setUser(userData);
+      setRole(userData.role);
+      localStorage.setItem('user_id', userData.id);
+      return userData;
+    } catch {
+      clearSession();
+      return null;
+    } finally {
+      setLoading(false);
+    }
+  }, [clearSession]);
+
+  useEffect(() => {
+    refreshUser();
+  }, [refreshUser]);
+
+  const logout = useCallback(async () => {
+    try {
+      await api.post('/logout');
+    } catch {
+      // A locally expired session is still safe to clear.
+    }
+    clearSession();
+    setLoading(false);
+  }, [clearSession]);
+
+  const value = {
+    user,
+    role,
+    isAdmin: role === 'admin',
+    isElecteur: role === 'electeur',
+    loading,
+    logout,
+    refreshUser,
+  };
+
+  return createElement(AuthContext.Provider, { value }, children);
+}
+
 export const useAuth = () => {
-    const [user, setUser] = useState(null);
-    const [isAdmin, setIsAdmin] = useState(false);
-    const [isElecteur, setIsElecteur] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [role, setRole] = useState(null);
-
-    const loadUserFromServer = useCallback(async () => {
-        const token = localStorage.getItem('user_token');
-        
-        if (!token) {
-            setLoading(false);
-            setUser(null);
-            setIsAdmin(false);
-            setIsElecteur(false);
-            setRole(null);
-            return;
-        }
-
-        try {
-            // Appel à la nouvelle route backend pour vérifier le VRAI rôle
-            const response = await api.get('/auth/verify-role', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-
-            if (response.data && response.data.success) {
-                const userData = response.data.data;
-                setUser(userData);
-                setRole(userData.role);
-                setIsAdmin(userData.role === 'admin');
-                setIsElecteur(userData.role === 'electeur');
-                
-                // Mise à jour sécurisée (sans stocker le rôle en clair modifiable)
-                // On ne stocke que ce qui est nécessaire dans localStorage
-                localStorage.setItem('user_id', userData.id);
-                // NE PAS stocker user_data avec le rôle !
-            } else {
-                // Token invalide, on nettoie
-                localStorage.removeItem('user_token');
-                localStorage.removeItem('user_data');
-                localStorage.removeItem('user_tokenrefsh');
-                setUser(null);
-                setIsAdmin(false);
-                setIsElecteur(false);
-                setRole(null);
-            }
-        } catch (error) {
-            console.error('Erreur vérification rôle:', error);
-            // En cas d'erreur, on considère que l'utilisateur n'est pas authentifié
-            localStorage.removeItem('user_token');
-            localStorage.removeItem('user_data');
-            localStorage.removeItem('user_tokenrefsh');
-            setUser(null);
-            setIsAdmin(false);
-            setIsElecteur(false);
-            setRole(null);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
-    useEffect(() => {
-        loadUserFromServer();
-    }, [loadUserFromServer]);
-
-    const logout = useCallback(() => {
-        localStorage.removeItem('user_token');
-        localStorage.removeItem('user_data');
-        localStorage.removeItem('user_tokenrefsh');
-        localStorage.removeItem('user_id');
-        setUser(null);
-        setRole(null);
-        setIsAdmin(false);
-        setIsElecteur(false);
-    }, []);
-
-    const refreshUser = useCallback(() => {
-        setLoading(true);
-        loadUserFromServer();
-    }, [loadUserFromServer]);
-
-    return { user, isAdmin, isElecteur, role, loading, logout, refreshUser };
+  const context = useContext(AuthContext);
+  if (!context) throw new Error('useAuth doit être utilisé dans AuthProvider');
+  return context;
 };

@@ -4,6 +4,10 @@ import {
   Users, TrendingUp, ShieldCheck, Loader2, User, Radio, Timer, FileDown, XCircle, Printer
 } from 'lucide-react';
 import api from '../services/api';
+import { candidatePhotoUrl } from '../utils/media';
+import ConfirmDialog from '../Components/ConfirmDialog';
+import Loading from '../Components/Loading';
+import EmptyState from '../Components/EmptyState';
 
 /* ── Composants utilitaires (inchangés) ── */
 const LiveDot = () => (
@@ -78,7 +82,7 @@ const CandidateRow = ({ c, index, votersCount, tickPulse }) => {
         <span className="text-[11px] font-black text-slate-300 w-4 shrink-0 text-right">{index + 1}</span>
         <div className={`w-11 h-11 rounded-2xl overflow-hidden shrink-0 border-2 transition-all duration-300 ${isLeader ? 'border-emerald-400' : 'border-slate-100'}`}>
           {c.photo_path ? (
-            <img src={`${import.meta.env.VITE_STORAGE_URL}/${c.photo_path}`} className="w-full h-full object-cover" alt={c.name} />
+            <img src={candidatePhotoUrl(c.photo_url || c.photo_path)} className="w-full h-full object-cover" alt={c.name} />
           ) : (
             <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300"><User size={16} /></div>
           )}
@@ -107,9 +111,9 @@ const ElectionCard = ({ election, totalInscritsGlobaux, onClose }) => {
   const sortedCandidates = [...candidates].sort((a, b) => b.votes_count - a.votes_count);
   const leader = sortedCandidates[0];
   const [closing, setClosing] = useState(false);
+  const [confirmClose, setConfirmClose] = useState(false);
 
   const handleClose = async () => {
-    if (!window.confirm(`Clôturer définitivement le scrutin "${title}" ?`)) return;
     setClosing(true);
     try {
       await api.put(`/positions/${id}`, { is_active: false });
@@ -118,11 +122,13 @@ const ElectionCard = ({ election, totalInscritsGlobaux, onClose }) => {
       console.error("Erreur lors de la clôture", error);
     } finally {
       setClosing(false);
+      setConfirmClose(false);
     }
   };
 
   return (
     <div className="bg-white rounded-[40px] border border-slate-100 shadow-sm overflow-hidden">
+      <ConfirmDialog isOpen={confirmClose} onClose={() => !closing && setConfirmClose(false)} onConfirm={handleClose} loading={closing} title="Clôturer ce scrutin ?" description={`Le scrutin « ${title} » sera fermé et ne recevra plus de vote.`} confirmLabel="Clôturer le scrutin" />
       <div className="p-8">
         {/* En-tête avec titre, statut, leader et bouton clôturer */}
         <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
@@ -144,7 +150,7 @@ const ElectionCard = ({ election, totalInscritsGlobaux, onClose }) => {
                 <div className="w-8 h-8 rounded-xl overflow-hidden ring-2 ring-emerald-400 shrink-0">
                   {leader.photo_path ? (
                     <img
-                      src={`${import.meta.env.VITE_STORAGE_URL}/${leader.photo_path}`}
+                      src={candidatePhotoUrl(leader.photo_url || leader.photo_path)}
                       className="w-full h-full object-cover"
                       alt={leader.name}
                     />
@@ -167,7 +173,7 @@ const ElectionCard = ({ election, totalInscritsGlobaux, onClose }) => {
 
             {is_active && (
               <button
-                onClick={handleClose}
+              onClick={() => setConfirmClose(true)}
                 disabled={closing}
                 className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-all text-xs font-black"
               >

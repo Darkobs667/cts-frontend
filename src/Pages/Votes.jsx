@@ -4,6 +4,10 @@ import { Plus, Play, Trash2, Edit3, StopCircle, Vote, Radio, CheckCircle2, XCirc
 import CreateElectionModal from '../Components/CreateElectionModal';
 import Logoscrutin from "../assets/scrutin.jpg";
 import api from '../services/api';
+import toast from 'react-hot-toast';
+import ConfirmDialog from '../Components/ConfirmDialog';
+import Loading from '../Components/Loading';
+import EmptyState from '../Components/EmptyState';
 
 /* ── Status badge ── */
 const StatusBadge = ({ isActive }) =>
@@ -23,7 +27,7 @@ const StatusBadge = ({ isActive }) =>
   );
 
 /* ── Election card ── */
-const ElectionCard = ({ election, index, onDelete, onToggle }) => {
+const ElectionCard = ({ election, index, onEdit, onDelete, onToggle }) => {
   const isActive = election.is_active == 1;
 
   return (
@@ -68,8 +72,13 @@ const ElectionCard = ({ election, index, onDelete, onToggle }) => {
 
         {/* right — actions */}
         <div className="flex items-center gap-2 justify-end shrink-0">
-          {/* edit */}
-          
+          <button
+            onClick={() => onEdit(election)}
+            title="Modifier"
+            className="w-10 h-10 flex items-center justify-center rounded-2xl text-slate-300 hover:bg-emerald-50 hover:text-emerald-600 transition-all duration-200"
+          >
+            <Edit3 size={17} />
+          </button>
 
           {/* delete */}
           <button
@@ -109,6 +118,8 @@ const Votes = () => {
   const [elections, setElections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [editingElection, setEditingElection] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchElections = async () => {
     try {
@@ -128,15 +139,19 @@ const Votes = () => {
 
   useEffect(() => { fetchElections(); }, []);
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Supprimer définitivement ce scrutin ?")) {
-      try {
-        await api.delete(`/positions/${id}`);
-        setElections(prev => prev.filter(el => el.id !== id));
-      } catch (error) {
-        alert("Erreur lors de la suppression");
-        console.error(error);
-      }
+  const handleDelete = async () => {
+    if (!deletingId) return;
+    setDeleting(true);
+    try {
+      await api.delete(`/positions/${deletingId}`);
+      setElections((previous) => previous.filter((election) => election.id !== deletingId));
+      toast.success('Scrutin supprimé.');
+      setDeletingId(null);
+    } catch (error) {
+      toast.error('Impossible de supprimer ce scrutin.');
+      console.error(error);
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -151,8 +166,9 @@ const Votes = () => {
       setElections(prev =>
         prev.map(el => el.id === election.id ? { ...el, is_active: newActive } : el)
       );
+      toast.success(newActive ? 'Scrutin activé.' : 'Scrutin désactivé.');
     } catch (error) {
-      alert("Erreur lors du changement d'état");
+      toast.error("Erreur lors du changement d'état");
       console.error(error);
     }
   };
@@ -168,6 +184,7 @@ const Votes = () => {
 
   return (
     <AdminLayout activePage="votes">
+      <ConfirmDialog isOpen={Boolean(deletingId)} onClose={() => !deleting && setDeletingId(null)} onConfirm={handleDelete} loading={deleting} tone="danger" title="Supprimer ce scrutin ?" description="Cette suppression est définitive et retirera le scrutin de la plateforme." confirmLabel="Supprimer" />
       <style>{`
         @keyframes fadeUp {
           from { opacity: 0; transform: translateY(14px); }
@@ -218,12 +235,7 @@ const Votes = () => {
 
         {/* ── content ── */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-32">
-            <div className="w-12 h-12 border-4 border-slate-100 border-t-emerald-500 rounded-full animate-spin mb-4" />
-            <p className="text-[10px] font-black text-slate-300 tracking-widest uppercase animate-pulse">
-              Chargement…
-            </p>
-          </div>
+          <Loading text="Chargement des scrutins…" className="py-32" />
         ) : elections.length > 0 ? (
           <div className="flex flex-col gap-4">
             {elections.map((election, i) => (
@@ -232,7 +244,7 @@ const Votes = () => {
                 election={election}
                 index={i}
                 onEdit={(el) => { setEditingElection(el); setShowModal(true); }}
-                onDelete={handleDelete}
+                onDelete={setDeletingId}
                 onToggle={toggleActive}
               />
             ))}

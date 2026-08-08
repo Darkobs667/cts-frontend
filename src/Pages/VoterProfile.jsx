@@ -1,48 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo } from 'react';
 import VoterLayout from "../Components/VoterLayout";
-import { User, ShieldCheck, Fingerprint, Lock, Mail, CreditCard, RefreshCw } from 'lucide-react';
-import { getConnectedUser } from '../utils/userHelper';
-import api from '../services/api';
+import { User, ShieldCheck, Fingerprint, Lock, Mail, CreditCard } from 'lucide-react';
+import { useAuth } from '../hooks/useAuth';
+import toast from 'react-hot-toast';
 
 const VoterProfile = () => {
-  const [loading, setLoading] = useState(true);
-  const [updating, setUpdating] = useState(false);
-  const [userData, setUserData] = useState(null);
-
-  useEffect(() => {
-    const fetchProfileData = async () => {
-      try {
-        setLoading(true);
-        const user = getConnectedUser();
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        setUserData({
-          nom: user.fullName,
-          email: user.email,
-          uid: user.created_at,
-          isVerified: true,
-          twoFactorEnabled: true,
-          initials: user.initials,
-        });
-      } catch (error) {
-        console.error("Erreur de chargement du profil:", error);
-      } finally {
-        setLoading(false);
-      }
+  const { user, loading } = useAuth();
+  const userData = useMemo(() => {
+    if (!user) return null;
+    const firstName = user.first_name || '';
+    const lastName = user.last_name || '';
+    return {
+      nom: `${firstName} ${lastName}`.trim() || 'Électeur CTS',
+      email: user.email || '—',
+      uid: `CTS-${user.id}`,
+      isVerified: user.status === 'Validé',
+      initials: `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase() || 'CT',
     };
-    fetchProfileData();
-  }, []);
-
-  const toggle2FA = async () => {
-    try {
-      setUpdating(true);
-      const newStatus = !userData.twoFactorEnabled;
-      setUserData({ ...userData, twoFactorEnabled: newStatus });
-    } catch (error) {
-      alert("Erreur lors de la mise à jour de la sécurité.", error);
-    } finally {
-      setUpdating(false);
-    }
-  };
+  }, [user]);
 
   return (
     <VoterLayout activePage="profile">
@@ -54,7 +29,7 @@ const VoterProfile = () => {
         .fade-up { animation: fadeUp .42s ease both; }
       `}</style>
 
-      {loading ? (
+      {loading || !userData ? (
         <div className="flex flex-col items-center justify-center min-h-[70vh]">
           <div className="relative flex items-center justify-center">
             <div className="w-16 h-16 border-4 border-slate-100 border-t-emerald-500 rounded-full animate-spin" />
@@ -193,48 +168,30 @@ const VoterProfile = () => {
                     <h3 className="text-[11px] font-black text-slate-900 tracking-wide">Centre de sécurité</h3>
                   </div>
 
-                  {/* 2FA toggle */}
-                  <div
-                    onClick={!updating ? toggle2FA : undefined}
-                    className={`cursor-pointer p-5 rounded-2xl border transition-all duration-300 ${
-                      userData.twoFactorEnabled
-                        ? 'bg-emerald-50/60 border-emerald-100 hover:bg-emerald-50'
-                        : 'bg-slate-50 border-slate-100 hover:bg-white hover:border-slate-200'
-                    }`}
+                  <button
+                    type="button"
+                    onClick={() => toast('La double authentification sera disponible prochainement.')}
+                    className="w-full cursor-pointer p-5 rounded-2xl border text-left transition-all duration-300 bg-slate-50 border-slate-100 hover:bg-white hover:border-slate-200"
                   >
                     <div className="flex items-center justify-between gap-4">
                       <div className="flex items-center gap-3">
-                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-colors ${
-                          userData.twoFactorEnabled ? 'bg-emerald-500 text-white shadow-sm shadow-emerald-100' : 'bg-slate-200 text-slate-400'
-                        }`}>
+                        <div className="w-10 h-10 rounded-2xl flex items-center justify-center bg-slate-200 text-slate-400">
                           <ShieldCheck size={18} />
                         </div>
                         <div>
                           <p className="text-xs font-black text-slate-800">Double authentification</p>
-                          <p className={`text-[9px] font-bold mt-0.5 tracking-widest ${
-                            userData.twoFactorEnabled ? 'text-emerald-600' : 'text-slate-400'
-                          }`}>
-                            {userData.twoFactorEnabled ? 'PROTÉGÉ PAR 2FA' : 'NON SÉCURISÉ'}
+                          <p className="text-[9px] font-bold mt-0.5 tracking-widest text-slate-400">
+                            NON CONFIGURÉE
                           </p>
                         </div>
                       </div>
 
                       {/* toggle pill */}
-                      <div className={`w-12 h-6 rounded-full relative p-0.5 transition-colors duration-500 shrink-0 ${
-                        userData.twoFactorEnabled ? 'bg-emerald-500' : 'bg-slate-200'
-                      }`}>
-                        {updating ? (
-                          <div className="absolute inset-0 flex items-center justify-center">
-                            <RefreshCw size={12} className="animate-spin text-white" />
-                          </div>
-                        ) : (
-                          <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-all duration-500 ${
-                            userData.twoFactorEnabled ? 'translate-x-6' : 'translate-x-0'
-                          }`} />
-                        )}
+                      <div className="w-12 h-6 rounded-full relative p-0.5 bg-slate-200 shrink-0">
+                        <div className="w-5 h-5 bg-white rounded-full shadow-md" />
                       </div>
                     </div>
-                  </div>
+                  </button>
                 </div>
 
                 {/* reset button */}

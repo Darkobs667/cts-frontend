@@ -4,6 +4,17 @@ import { Link, useNavigate } from "react-router";
 import logocts from "../assets/logo-cts2-removebg-preview.png";
 import authService from '../services/authService';
 import FingerprintJS from '@fingerprintjs/fingerprintjs';
+import toast from 'react-hot-toast';
+
+const errorToMessage = (error) => {
+    if (typeof error === 'string') return error;
+    if (Array.isArray(error)) return error.filter(Boolean).join(' ');
+    if (error && typeof error === 'object') {
+        const messages = Object.values(error).flatMap((value) => Array.isArray(value) ? value : [value]);
+        return messages.filter((value) => typeof value === 'string' && value.trim()).join(' ') || 'Les informations saisies sont invalides.';
+    }
+    return 'Une erreur est survenue. Réessayez.';
+};
 
 const SignUp = () => {
     const navigate = useNavigate();
@@ -44,8 +55,8 @@ const SignUp = () => {
             }
         }
         if (name === 'password') {
-            if (value && value.length < 8) {
-                errorMsg = "Le mot de passe doit contenir au moins 8 caractères.";
+            if (value && value.length < 12) {
+                errorMsg = "Le mot de passe doit contenir au moins 12 caractères.";
             }
         }
         setErrors(prev => ({ ...prev, [name]: errorMsg }));
@@ -81,14 +92,13 @@ const SignUp = () => {
 
         // 1. Vérifier si la réponse contient une erreur (singulier ou pluriel)
         if (response && (response.error || response.errors)) {
-            const msg = response.error || response.errors;
-            setServerError(msg);
+            setServerError(errorToMessage(response.error || response.errors));
             return;
         }
 
         // 2. Pas d'erreur -> succès
-        alert("Félicitations ! Votre compte électoral est créé.");
-        navigate('/login');
+        toast.success("Votre compte électoral est créé.");
+        navigate('/login', { replace: true, state: { registered: true } });
 
     } catch (err) {
         // 3. Gestion de toute erreur levée (réseau, HTTP, ou objet retourné)
@@ -107,7 +117,7 @@ const SignUp = () => {
         else if (err?.message) message = err.message;
         else if (typeof err === 'string') message = err;
 
-        setServerError(message);
+        setServerError(errorToMessage(message));
     } finally {
         setLoading(false);
     }

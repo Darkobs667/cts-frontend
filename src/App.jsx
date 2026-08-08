@@ -1,35 +1,44 @@
 // src/App.jsx
 import { Routes, Route, Navigate } from "react-router";
-import { useEffect } from 'react';
-import LoginCTS from './Pages/Login.jsx';
-import Adminpage from "./Pages/Admin.jsx";
-import SignUp from './Pages/signup.jsx';
-import Votes from './Pages/Votes.jsx';
-import Electeurs from './Pages/Electeurs.jsx';
-import Candidats from './Pages/Settings.jsx';
-import VoterDashboard from './Pages/VoterDashboard.jsx';
-import VoterChoice from './Components/VoterChoice.jsx';
-import VoterRecap from './Components/VoterRecap.jsx';
-import VoterHistory from './Pages/VoterHistory.jsx';
-import VoterProfile from './Pages/VoterProfile.jsx';
-import AdminresultsPage from './Pages/adminresult.jsx';
+import { lazy, Suspense } from 'react';
 import ProtectedRoute from "./Components/ProtectedRoute.jsx";
-import ElecteurScrutins from "./Pages/ElecteurScrutins.jsx";
-import AdminCandidatures from "./Pages/AdminCandidatures.jsx";
 import { useAuth } from './hooks/useAuth';
+import { AnimatePresence, motion } from 'framer-motion';
+import Loading from './Components/Loading';
+
+const LoginCTS = lazy(() => import('./Pages/Login.jsx'));
+const SignUp = lazy(() => import('./Pages/signup.jsx'));
+const Adminpage = lazy(() => import('./Pages/Admin.jsx'));
+const Votes = lazy(() => import('./Pages/Votes.jsx'));
+const Electeurs = lazy(() => import('./Pages/Electeurs.jsx'));
+const Candidats = lazy(() => import('./Pages/Settings.jsx'));
+const VoterDashboard = lazy(() => import('./Pages/VoterDashboard.jsx'));
+const VoterChoice = lazy(() => import('./Components/VoterChoice.jsx'));
+const VoterBallot = lazy(() => import('./Pages/VoterBallot.jsx'));
+const VoterRecap = lazy(() => import('./Components/VoterRecap.jsx'));
+const VoterHistory = lazy(() => import('./Pages/VoterHistory.jsx'));
+const VoterProfile = lazy(() => import('./Pages/VoterProfile.jsx'));
+const AdminresultsPage = lazy(() => import('./Pages/adminresult.jsx'));
+const ElecteurScrutins = lazy(() => import('./Pages/ElecteurScrutins.jsx'));
+const AdminCandidatures = lazy(() => import('./Pages/AdminCandidatures.jsx'));
+
+const PageLoader = () => (
+    <div className="min-h-screen bg-slate-50"><Loading text="Chargement de la page…" className="min-h-screen" /></div>
+);
 
 function AppContent() {
     const { loading } = useAuth();
     
     if (loading) {
         return (
-            <div className="flex justify-center items-center h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
-            </div>
+            <div className="min-h-screen bg-slate-50"><Loading text="Chargement de votre session…" className="min-h-screen" /></div>
         );
     }
     
     return (
+        <Suspense fallback={<PageLoader />}>
+        <AnimatePresence mode="wait">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
         <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<LoginCTS />} />
@@ -43,6 +52,11 @@ function AppContent() {
             <Route path="/voterChoice" element={
                 <ProtectedRoute allowedRole="electeur">
                     <VoterChoice />
+                </ProtectedRoute>
+            } />
+            <Route path="/voterBallot" element={
+                <ProtectedRoute allowedRole="electeur">
+                    <VoterBallot />
                 </ProtectedRoute>
             } />
             <Route path="/voterRecap" element={
@@ -99,19 +113,12 @@ function AppContent() {
 
             <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
+        </motion.div>
+        </AnimatePresence>
+        </Suspense>
     );
 }
 
-function App() {
-    // Nettoyage des anciennes données vulnérables au démarrage
-    useEffect(() => {
-        if (localStorage.getItem('user_data')) {
-            console.warn('Nettoyage des anciennes données vulnérables...');
-            // On ne supprime pas complètement, mais on va utiliser useAuth pour vérifier
-        }
-    }, []);
-    
-    return <AppContent />;
-}
+function App() { return <AppContent />; }
 
 export default App;

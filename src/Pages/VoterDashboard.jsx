@@ -1,56 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import VoterLayout from "../Components/VoterLayout";
 import { useNavigate } from "react-router";
-import { Users, Vote, CheckCircle, Clock, ArrowRight, ShieldCheck, Zap, CheckSquare } from 'lucide-react';
+import { Vote, CheckCircle, Clock, ArrowRight, Zap, CheckSquare, CircleDotDashed, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
+import StatCard from '../Components/StatCard';
 
 /* ── Stat card redesigned ── */
-const ModernStatCard = ({ label, value, icon: Icon, accent }) => (
-  <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 flex items-center gap-4 fade-up hover:shadow-md hover:border-slate-200 transition-all duration-300">
-    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${accent}`}>
-      <Icon size={20} className="text-white" />
-    </div>
-    <div className="min-w-0">
-      <p className="text-[9px] font-black text-slate-400 tracking-widest uppercase mb-1">{label}</p>
-      <p className="text-2xl font-[900] text-slate-900 leading-none tabular-nums">{value}</p>
-    </div>
-  </div>
-);
+const ModernStatCard = (props) => <div className="fade-up"><StatCard {...props} /></div>;
 
 /* ── Election row avec bouton Déjà voté ── */
 const ElectionRow = ({ election, index, onVote, hasVoted }) => {
   const isActive = election.type === 'active';
 
   return (
-    <div
-      className="group relative flex flex-col md:grid md:grid-cols-5 gap-4 md:items-center
-        p-5 md:px-7 md:py-6 rounded-2xl border border-transparent
-        hover:bg-emerald-50/40 hover:border-emerald-100 transition-all duration-200 fade-up"
+    <article
+      className="group relative overflow-hidden rounded-3xl border border-slate-100 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-950/5 fade-up"
       style={{ animationDelay: `${index * 70}ms` }}
     >
-      <span className="absolute left-0 top-3 bottom-3 w-0.5 rounded-r-full bg-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity duration-200" />
-
-      <div className="flex items-center gap-3 md:col-span-2">
-        <div className="w-8 h-8 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
-          <Vote size={13} className={isActive && !hasVoted ? 'text-emerald-500' : 'text-slate-300'} />
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400 opacity-0 transition-opacity group-hover:opacity-100" />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${hasVoted ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-600'}`}>
+          {hasVoted ? <CheckSquare size={20} /> : <Vote size={20} />}
         </div>
-        <span className="font-black text-slate-800 text-sm leading-tight">{election.titre}</span>
-      </div>
-
-      <div>
-        <span className="md:hidden text-[9px] font-black text-slate-300 mb-1 block">Date</span>
-        <span className="text-slate-400 text-xs font-bold italic">{election.date}</span>
-      </div>
-
-      <div className="flex md:justify-center">
+        <div className="min-w-0 flex-1">
+          <p className="text-[9px] font-black uppercase tracking-[0.16em] text-emerald-600">Scrutin disponible</p>
+          <h3 className="mt-1 truncate text-base font-black text-slate-900">{election.titre}</h3>
+          <p className="mt-1 flex items-center gap-1.5 text-[11px] font-medium text-slate-400"><Clock size={12} /> Mis à jour le {election.date}</p>
+        </div>
         {hasVoted ? (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[9px] font-black bg-green-50 text-green-600 border border-green-100">
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-[9px] font-black text-emerald-600">
             <CheckSquare size={10} />
             Déjà voté
           </span>
         ) : isActive ? (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[9px] font-black bg-emerald-50 text-emerald-600 border border-emerald-100">
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-[9px] font-black text-emerald-600">
             <span className="relative flex h-1.5 w-1.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
               <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500" />
@@ -58,26 +42,23 @@ const ElectionRow = ({ election, index, onVote, hasVoted }) => {
             En Cours
           </span>
         ) : (
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[9px] font-black bg-amber-50 text-amber-500 border border-amber-100">
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-xl border border-amber-100 bg-amber-50 px-3 py-1.5 text-[9px] font-black text-amber-500">
             <Clock size={9} />
             Terminé
           </span>
         )}
-      </div>
-
-      <div className="md:text-right">
         {isActive && !hasVoted ? (
           <button
             onClick={() => onVote(election)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600
-              text-white rounded-2xl text-[10px] font-black shadow-sm shadow-emerald-100
+            className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-[10px] font-black text-white shadow-lg shadow-emerald-500/20 transition-all
+              hover:-translate-y-0.5 hover:bg-emerald-700
               active:scale-95 transition-all duration-200"
           >
             Voter maintenant
             <ArrowRight size={13} />
           </button>
         ) : hasVoted ? (
-          <span className="inline-flex items-center gap-1.5 px-4 py-2.5 bg-slate-100 text-slate-400
+          <span className="inline-flex items-center gap-1.5 rounded-2xl bg-slate-100 px-4 py-3 text-slate-400
             rounded-2xl text-[10px] font-black cursor-not-allowed">
             <CheckSquare size={12} />
             Vote enregistré
@@ -86,7 +67,7 @@ const ElectionRow = ({ election, index, onVote, hasVoted }) => {
           <span className="text-slate-300 text-[10px] font-black">Fermé</span>
         )}
       </div>
-    </div>
+    </article>
   );
 };
 
@@ -96,9 +77,9 @@ const VoterDashboard = () => {
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
-    votesClotures: 0,
-    votesEnCours: 0,
-    participation: '0%',
+    completed: 0,
+    remaining: 0,
+    total: 0,
   });
   const [elections, setElections] = useState([]);
   const [userVotedIds, setUserVotedIds] = useState([]);
@@ -107,8 +88,8 @@ const VoterDashboard = () => {
   const fetchUserVotes = async () => {
     try {
       const response = await api.get('/votes/my');
-      if (response.data && response.data.data) {
-        const votedIds = response.data.data.map(vote => vote.position_id);
+      if (Array.isArray(response.data)) {
+        const votedIds = response.data.map(vote => vote.position_id);
         setUserVotedIds(votedIds);
         return votedIds;
       }
@@ -123,24 +104,7 @@ const VoterDashboard = () => {
       try {
         setLoading(true);
 
-        // 1. Récupérer les votes existants de l'utilisateur
-        await fetchUserVotes();
-
-        // 2. Récupérer les stats globales
-        try {
-          const statsRes = await api.get('/admin/stats-globales');
-          if (statsRes.data?.data) {
-            setStats({
-              votesClotures: statsRes.data.data.votesClotures || 0,
-              votesEnCours: statsRes.data.data.votesEnCours || 0,
-              participation: statsRes.data.data.participation || '0',
-            });
-          }
-        } catch (error) {
-          console.warn("Stats non disponibles", error);
-        }
-
-        // 3. Récupérer les élections actives
+        // Récupérer les élections actives et en déduire le suivi individuel.
         try {
           const posRes = await api.get('/positions');
           if (posRes.data?.success) {
@@ -160,10 +124,14 @@ const VoterDashboard = () => {
                     })
                   : 'Date inconnue',
                 type: 'active',
+                description: pos.description,
                 created_at: pos.created_at,
               }))
               .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
             
+            const voted = await fetchUserVotes();
+            const completed = activeElections.filter(({ id }) => voted.includes(id)).length;
+            setStats({ completed, remaining: activeElections.length - completed, total: activeElections.length });
             setElections(activeElections);
           }
         } catch (error) {
@@ -181,7 +149,7 @@ const VoterDashboard = () => {
   }, []);
 
   const handleStartVote = (election) => {
-    navigate('/voterChoice', { state: { election } });
+    navigate('/voterBallot');
   };
 
   const userFullName = user ? `${user.first_name} ${user.last_name}` : 'Utilisateur';
@@ -225,21 +193,21 @@ const VoterDashboard = () => {
           {/* ── stat cards (sans Électeurs inscrits) ── */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <ModernStatCard 
-              label="Votes clôturés" 
-              value={stats.votesClotures || 0} 
+              label="Déjà votés"
+              value={stats.completed}
               icon={CheckCircle} 
               accent="bg-blue-500 shadow-lg shadow-blue-100" 
             />
             <ModernStatCard 
-              label="Votes en cours" 
-              value={stats.votesEnCours || 0} 
-              icon={Clock} 
+              label="À voter"
+              value={stats.remaining}
+              icon={CircleDotDashed}
               accent="bg-amber-500 shadow-lg shadow-amber-100" 
             />
             <ModernStatCard 
-              label="Participation" 
-              value={`${stats.participation || 0}%`} 
-              icon={Vote} 
+              label="Scrutins ouverts"
+              value={stats.total}
+              icon={Clock}
               accent="bg-purple-500 shadow-lg shadow-purple-100" 
             />
           </div>
@@ -264,14 +232,7 @@ const VoterDashboard = () => {
               )}
             </div>
 
-            <div className="hidden md:grid grid-cols-5 px-7 py-4 text-[9px] font-black text-slate-300 uppercase border-b border-slate-50">
-              <div className="col-span-2">Poste à pourvoir</div>
-              <div>Date de clôture</div>
-              <div>Statut</div>
-              <div className="text-right">Action</div>
-            </div>
-
-            <div className="px-2 py-2">
+            <div className="grid gap-3 p-4 sm:grid-cols-2">
               {elections.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-20 text-center">
                   <div className="w-16 h-16 bg-slate-50 rounded-[24px] border-2 border-dashed border-slate-200 flex items-center justify-center mb-4">

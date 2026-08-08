@@ -11,10 +11,6 @@ const authService = {
                 }
             });
             
-            if (response.data.access_token) {
-                localStorage.setItem('user_token', response.data.access_token);
-            }
-            
             return response.data;
         } catch (error) {
             if (error.response && error.response.data) {
@@ -38,8 +34,6 @@ const authService = {
             if (backendData && backendData.access_token) {
                 localStorage.setItem('user_token', backendData.access_token);
                 localStorage.setItem('user_tokenrefsh', backendData.refresh_token);
-                // ⚠️ CRITIQUE: On stocke user_data mais on ne l'utilisera PLUS pour les vérifications de rôle
-                localStorage.setItem('user_data', JSON.stringify(backendData.user));
             }
 
             return response.data;
@@ -53,10 +47,11 @@ const authService = {
 
     logout: () => {
         localStorage.removeItem('user_token');
-        localStorage.removeItem('user_data');
         localStorage.removeItem('user_tokenrefsh');
         localStorage.removeItem('user_id');
     },
+
+    me: async () => (await api.get('/auth/me')).data.user,
     
     // NOUVELLE MÉTHODE: Vérifier si l'utilisateur est admin via le serveur
     isAdmin: async () => {

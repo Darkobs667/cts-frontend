@@ -1,51 +1,31 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router';
 import AdminLayout from '../Components/AdminLayout';
-import StatCard from '../Components/StatCard';
 import { Users, Vote, CheckCircle, Clock, Loader2, ArrowRight, TrendingUp, Calendar } from 'lucide-react';
 import adminService from '../services/adminService';
 import api from '../services/api';
 import { useAuth } from '../hooks/useAuth'; // ← Ajouté pour sécurité (optionnel)
+import StatCard from '../Components/StatCard';
 
 /* ── Stat card ── */
-const ModernStatCard = ({ label, value, icon: Icon, accent, delay }) => (
-  <div
-    className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 flex items-center gap-4
-      hover:shadow-md hover:border-slate-200 transition-all duration-300 fade-up"
-    style={{ animationDelay: delay }}
-  >
-    <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${accent}`}>
-      <Icon size={20} className="text-white" />
-    </div>
-    <div className="min-w-0">
-      <p className="text-[9px] font-black text-slate-400 tracking-widest uppercase mb-1 leading-none">
-        {label}
-      </p>
-      <p className="text-2xl font-[900] text-slate-900 leading-none tabular-nums">{value}</p>
-    </div>
-  </div>
-);
+const ModernStatCard = ({ delay, ...props }) => <div className="fade-up" style={{ animationDelay: delay }}><StatCard {...props} /></div>;
 
 /* ── Election row (desktop) ── */
 const ElectionRow = ({ election, index }) => {
   const isActive = election.statut === 'Actif';
   return (
-    <div
-      className="group relative flex flex-col md:grid md:grid-cols-4 gap-3 md:items-center
-        p-4 md:px-6 md:py-5 rounded-2xl border border-transparent
-        hover:bg-emerald-50/40 hover:border-emerald-100 transition-all duration-200 fade-up"
+    <article
+      className="group relative overflow-hidden rounded-3xl border border-slate-100 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-950/5 fade-up"
       style={{ animationDelay: `${index * 60}ms` }}
     >
-      <span className="absolute left-0 top-3 bottom-3 w-0.5 rounded-r-full bg-emerald-400 opacity-0 group-hover:opacity-100 transition-opacity" />
-
-      <div className="flex items-center gap-3">
-        <div className="w-8 h-8 rounded-xl bg-slate-50 border border-slate-100 flex items-center justify-center shrink-0">
-          <Vote size={13} className={isActive ? 'text-emerald-500' : 'text-slate-300'} />
+      <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400 opacity-0 transition-opacity group-hover:opacity-100" />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${isActive ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}><Vote size={20} /></div>
+        <div className="min-w-0 flex-1">
+          <p className="text-[9px] font-black uppercase tracking-[0.16em] text-emerald-600">Scrutin</p>
+          <h4 className="mt-1 truncate text-base font-black text-slate-900">{election.titre}</h4>
+          <p className="mt-1 flex items-center gap-1.5 text-[11px] font-medium text-slate-400"><Calendar size={12} /> Créé le {new Date(election.date_fin).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
         </div>
-        <span className="font-black text-slate-800 text-sm leading-tight">{election.titre}</span>
-      </div>
-
-      <div className="flex md:justify-start">
         {isActive ? (
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-[9px] font-black bg-emerald-50 text-emerald-600 border border-emerald-100">
             <span className="relative flex h-1.5 w-1.5">
@@ -60,28 +40,15 @@ const ElectionRow = ({ election, index }) => {
             Inactif
           </span>
         )}
-      </div>
-
-      <div className="flex items-center gap-1.5">
-        <Calendar size={11} className="text-slate-300 shrink-0" />
-        <span className="text-xs font-bold text-slate-400">
-          {new Date(election.date_fin).toLocaleDateString('fr-FR', {
-            day: 'numeric', month: 'long', year: 'numeric',
-          })}
-        </span>
-      </div>
-
-      <div className="md:text-right">
         <Link
           to="/votes-elections"
-          className="inline-flex items-center gap-1.5 text-[10px] font-black text-slate-400
-            hover:text-emerald-500 transition-colors group/link"
+          className="inline-flex items-center gap-1.5 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-[10px] font-black text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 group/link"
         >
           Détails
           <ArrowRight size={11} className="group-hover/link:translate-x-0.5 transition-transform" />
         </Link>
       </div>
-    </div>
+    </article>
   );
 };
 
@@ -128,6 +95,7 @@ const Dashboard = () => {
           titre: election.title,
           statut: election.is_active == 1 ? 'Actif' : 'Inactif',
           date_fin: election.created_at,
+          description: election.description,
         }));
         setRecentElections(recent);
       }
@@ -216,16 +184,7 @@ const Dashboard = () => {
             </Link>
           </div>
 
-          {recentElections.length > 0 && (
-            <div className="hidden md:grid grid-cols-4 px-7 py-4 text-[9px] font-black text-slate-300 tracking-widest uppercase border-b border-slate-50">
-              <div>Titre de l'élection</div>
-              <div>Statut</div>
-              <div>Date de création</div>
-              <div className="text-right">Action</div>
-            </div>
-          )}
-
-          <div className="px-2 py-2">
+          <div className="grid gap-3 p-4 sm:grid-cols-2">
             {isLoading && recentElections.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
                 <div className="w-10 h-10 border-4 border-slate-100 border-t-emerald-500 rounded-full animate-spin" />
@@ -279,7 +238,7 @@ const Dashboard = () => {
                   })}
                 </div>
 
-                <div className="hidden md:block">
+                <div className="hidden md:contents">
                   {recentElections.map((election, i) => (
                     <ElectionRow key={election.id} election={election} index={i} />
                   ))}

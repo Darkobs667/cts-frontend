@@ -4,29 +4,23 @@ import api from './api';
 
 const adminService = {
     getStats: async () => {
-        const token = localStorage.getItem('user_token');
-        return await api.get(`/admin/stats-globales`, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        return await api.get('/admin/stats-globales');
     },
 
 
     // Pour créer l'élection (Position)
     createPosition: async (data) => {
-        const token = localStorage.getItem('user_tokenrefsh');
-        return await api.post(`/positions`, data, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
+        return await api.post('/positions', data);
+    },
+
+    updatePosition: async (id, data) => {
+        return await api.put(`/positions/${id}`, data);
     },
 
     // Pour ajouter un candidat à cette élection spécifique
     addCandidat: async (formData) => {
-        const token = localStorage.getItem('user_tokenrefsh');
-        return await api.post(`/candidates`, formData, {
-            headers: { 
-                Authorization: `Bearer ${token}`,
-                'Content-Type': 'multipart/form-data' // Important pour les photos !
-            }
+        return await api.post('/candidates', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
         });
     }
 };

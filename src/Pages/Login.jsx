@@ -3,9 +3,11 @@ import { useState } from 'react';
 import { Link, useNavigate } from "react-router"; 
 import authService  from '../services/authService'; // Import du nouveau service
 import logocts from "../assets/logo-cts2-removebg-preview.png";
+import { useAuth } from '../hooks/useAuth';
 
 const LoginCTS = () => {
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false); // État pour le bouton de chargement
   const [serverError, setServerError] = useState(''); // Erreur venant de l'API Laravel
@@ -58,7 +60,7 @@ const LoginCTS = () => {
         if (response.data && response.data.access_token) {
             localStorage.setItem('user_token', response.data.access_token);
             localStorage.setItem('user_tokenrefsh', response.data.refresh_token);
-            localStorage.setItem('user_data', JSON.stringify(response.data.user));
+            await refreshUser();
             
             // Redirection basée sur le rôle
             const userRole = response.data.user.role;
@@ -75,7 +77,11 @@ const LoginCTS = () => {
         }
     } catch (error) {
         console.error("Erreur de connexion :", error);
-        const errorMsg = error.response?.data?.error || error.response?.data?.message || "Identifiants incorrects.";
+        const errorMsg = error?.error
+          || error?.message
+          || error.response?.data?.error
+          || error.response?.data?.message
+          || "Identifiants incorrects.";
         setServerError(errorMsg);
     } finally {
         setLoading(false);

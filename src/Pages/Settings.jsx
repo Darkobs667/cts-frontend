@@ -6,13 +6,23 @@ import {
   Edit3,
   Camera,
   Loader2,
-  X,
   CheckCircle2,
   Save,
   Quote,
 } from 'lucide-react';
 import candidateService from '../services/candidateService';
 import api from '../services/api'; // on garde api uniquement pour récupérer users et positions
+import { candidatePhotoUrl } from '../utils/media';
+import Modal from '../Components/Modal';
+import ConfirmDialog from '../Components/ConfirmDialog';
+import Loading from '../Components/Loading';
+import EmptyState from '../Components/EmptyState';
+import toast from 'react-hot-toast';
+
+const candidateName = (candidate) => {
+  const user = candidate.user;
+  return user?.nom || [user?.first_name, user?.last_name].filter(Boolean).join(' ').trim() || `Utilisateur #${candidate.user_id}`;
+};
 
 const Candidats = () => {
   const [candidats, setCandidats] = useState([]);
@@ -32,6 +42,8 @@ const Candidats = () => {
     preview: null,
   });
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchCandidats = async () => {
     try {
@@ -107,7 +119,7 @@ const Candidats = () => {
     bio: candidate.bio || '',
     photo: null,
     preview: candidate.photo_path
-      ? `${import.meta.env.VITE_STORAGE_URL}/${candidate.photo_path}`
+      ? candidatePhotoUrl(candidate.photo_url || candidate.photo_path)
       : candidate.user?.photo
       ? `${import.meta.env.VITE_STORAGE_URL}/${candidate.user.photo}`
       : null,
@@ -118,7 +130,8 @@ const Candidats = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.user_id || !form.position_id) {
-      return alert('Veuillez sélectionner un électeur et un poste.');
+      toast.error('Sélectionnez un électeur et un poste.');
+      return;
     }
 
     const payload = new FormData();
@@ -133,67 +146,58 @@ const Candidats = () => {
     try {
       setSaving(true);
       if (editingCandidate) {
-        await candidateService.update(editingCandidate.id, payload);
+        const updated = await candidateService.update(editingCandidate.id, payload);
+        if (!updated?.data) throw new Error('La candidature mise à jour est absente de la réponse serveur.');
+        setCandidats((prev) => prev.map((candidate) => candidate.id === updated.data.id ? updated.data : candidate));
       } else {
         await candidateService.create(payload);
       }
-      alert(editingCandidate ? 'Candidat modifié avec succès' : 'Candidat ajouté avec succès');
+      toast.success(editingCandidate ? 'Candidat modifié avec succès.' : 'Candidat ajouté avec succès.');
       setShowModal(false);
       resetForm();
       fetchCandidats();
     } catch (error) {
       console.error(error);
-      alert("Erreur lors de l'enregistrement.");
+      toast.error("Impossible d'enregistrer le candidat.");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDelete = async (id) => {
-    if (window.confirm('Supprimer ce candidat ?')) {
-      try {
-        await candidateService.delete(id);
-        setCandidats((prev) => prev.filter((c) => c.id !== id));
-      } catch (error) {
-        alert('Erreur lors de la suppression',error);
-      }
+  const handleDelete = async () => {
+    if (!deletingId) return;
+    setDeleting(true);
+    try {
+      await candidateService.delete(deletingId);
+      setCandidats((previous) => previous.filter((candidate) => candidate.id !== deletingId));
+      toast.success('Candidat supprimé.');
+      setDeletingId(null);
+    } catch (error) {
+      console.error(error);
+      toast.error('Impossible de supprimer ce candidat.');
+    } finally {
+      setDeleting(false);
     }
   };
 
 
   return (
     <AdminLayout activePage="candidats">
+      <ConfirmDialog isOpen={Boolean(deletingId)} onClose={() => !deleting && setDeletingId(null)} onConfirm={handleDelete} loading={deleting} tone="danger" title="Supprimer ce candidat ?" description="La candidature et ses informations associées seront supprimées définitivement." confirmLabel="Supprimer" />
       {/* Modale d'ajout / modification */}
       {showModal && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-md">
-          <div className="bg-white w-full max-w-3xl rounded-[40px] shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300 flex flex-col max-h-[90vh]">
-            {/* Header */}
-            <div className="p-8 border-b border-slate-50 flex justify-between items-center bg-slate-50/50">
-              <div>
-                <h3 className="text-xl font-[900] text-slate-900">
-                  {editingCandidate ? 'Modifier le candidat' : 'Ajouter un candidat'}
-                </h3>
-                <p className="text-[10px] text-emerald-500 font-black">
-                  Rattachez un électeur à un poste et personnalisez sa fiche
-                </p>
-              </div>
-              <button
-                onClick={() => setShowModal(false)}
-                className="p-3 hover:bg-white rounded-2xl transition-all text-slate-300 hover:text-red-500 shadow-sm"
-              >
-                <X size={24} />
-              </button>
-            </div>
-
-            <form onSubmit={handleSubmit} className="p-8 overflow-y-auto custom-scrollbar flex flex-col gap-8">
+        <Modal isOpen onClose={() => setShowModal(false)} size="lg"
+          title={editingCandidate ? 'Modifier le candidat' : 'Ajouter un candidat'}
+          subtitle="Rattachez un électeur à un poste et personnalisez sa fiche">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
               {/* Sélection utilisateur */}
               <div>
-                <label className="text-[10px] font-black text-slate-400 ml-2 mb-3 block">Électeur</label>
+                <label className="modal-label">Électeur</label>
                 <select
                   required
                   value={form.user_id}
                   onChange={(e) => setForm({ ...form, user_id: e.target.value })}
-                  className="w-full bg-slate-50 border-2 border-emerald-200 rounded-2xl p-5 font-bold text-slate-700 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-500 transition-all shadow-inner"
+                  className="modal-select"
                 >
                   <option value="">-- Choisir un électeur --</option>
                   {users.map((user) => (
@@ -206,12 +210,12 @@ const Candidats = () => {
 
               {/* Sélection poste */}
               <div>
-                <label className="text-[10px] font-black text-slate-400 ml-2 mb-3 block">Poste (scrutin)</label>
+                <label className="modal-label">Poste (scrutin)</label>
                 <select
                   required
                   value={form.position_id}
                   onChange={(e) => setForm({ ...form, position_id: e.target.value })}
-                  className="w-full bg-slate-50 border-2 border-emerald-200 rounded-2xl p-5 font-bold text-slate-700 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-500 transition-all shadow-inner"
+                  className="modal-select"
                 >
                   <option value="">-- Choisir un poste --</option>
                   {positions.map((pos) => (
@@ -224,43 +228,43 @@ const Candidats = () => {
 
               {/* Slogan */}
               <div>
-                <label className="text-[10px] font-black text-slate-400 ml-2 mb-3 block flex items-center gap-1">
+                <label className="modal-label flex items-center gap-1">
                   <Quote size={10} className="text-emerald-500" /> Slogan de campagne
                 </label>
                 <input
                   value={form.slogan}
                   onChange={(e) => setForm({ ...form, slogan: e.target.value })}
                   placeholder="Une phrase qui claque..."
-                  className="w-full bg-slate-50 border-2 border-emerald-200 rounded-2xl p-5 font-bold text-slate-700 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-500 transition-all shadow-inner placeholder:text-slate-300"
+                  className="modal-field"
                 />
               </div>
 
               {/* Bio */}
               <div>
-                <label className="text-[10px] font-black text-slate-400 ml-2 mb-3 block">Bio (optionnelle)</label>
+                <label className="modal-label">Bio <span className="normal-case tracking-normal text-slate-400">(optionnelle)</span></label>
                 <textarea
                   value={form.bio}
                   onChange={(e) => setForm({ ...form, bio: e.target.value })}
                   rows={3}
-                  className="w-full bg-slate-50 border-2 border-emerald-200 rounded-2xl p-5 font-bold text-slate-700 focus:ring-2 focus:ring-emerald-400 focus:border-emerald-500 transition-all shadow-inner resize-none placeholder:text-slate-300"
+                  className="modal-field resize-none"
                   placeholder="Présentez le candidat en quelques mots..."
                 />
               </div>
 
               {/* Photo */}
               <div>
-                <label className="text-[10px] font-black text-slate-400 ml-2 mb-3 block">Photo du candidat</label>
+                <label className="modal-label">Photo du candidat</label>
                 <div className="flex items-center gap-6">
                   <div
                     onClick={() => document.getElementById('cand-photo').click()}
-                    className="w-24 h-24 rounded-[30px] bg-slate-50 border-2 border-dashed border-slate-200 flex items-center justify-center cursor-pointer overflow-hidden hover:border-emerald-400 transition-all shadow-inner"
+                    className="w-24 h-24 rounded-[30px] bg-emerald-50 border-2 border-dashed border-emerald-200 flex items-center justify-center cursor-pointer overflow-hidden hover:border-emerald-400 transition-all"
                   >
                     {form.preview ? (
                       <img src={form.preview} className="w-full h-full object-cover" alt="Preview" />
                     ) : (
                       <div className="text-center">
-                        <Camera className="mx-auto text-slate-300" size={28} />
-                        <span className="text-[8px] font-black uppercase mt-1 block">Ajouter</span>
+                        <Camera className="mx-auto text-emerald-500" size={28} />
+                        <span className="text-[8px] font-black text-emerald-600 uppercase mt-1 block">Ajouter</span>
                       </div>
                     )}
                   </div>
@@ -275,29 +279,25 @@ const Candidats = () => {
                     <button
                       type="button"
                       onClick={() => setForm({ ...form, photo: null, preview: null })}
-                      className="text-red-500 text-xs font-bold hover:underline"
+                      className="text-emerald-700 text-xs font-bold hover:text-emerald-950"
                     >
                       Supprimer la photo
                     </button>
                   )}
                 </div>
               </div>
-            </form>
-
-            {/* Footer */}
-            <div className="p-8 bg-white border-t border-slate-50 flex gap-4">
+            <div className="flex gap-3 border-t border-emerald-100 pt-5">
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="flex-1 py-4 font-black text-slate-400 text-[10px] hover:text-slate-600 transition-colors"
+                className="modal-secondary-action flex-1"
               >
                 Annuler
               </button>
               <button
                 type="submit"
-                onClick={handleSubmit}
                 disabled={saving}
-                className="flex-1 bg-emerald-500 py-5 rounded-[24px] text-white font-[900] text-[11px] shadow-xl shadow-emerald-100 flex items-center justify-center gap-3 hover:bg-emerald-600 hover:-translate-y-1 transition-all active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="modal-primary-action flex-1 flex items-center justify-center gap-3"
               >
                 {saving ? (
                   <Loader2 size={20} className="animate-spin" />
@@ -309,8 +309,8 @@ const Candidats = () => {
                 {editingCandidate ? 'Enregistrer les modifications' : 'Ajouter le candidat'}
               </button>
             </div>
-          </div>
-        </div>
+            </form>
+        </Modal>
       )}
 
       {/* Contenu principal */}
@@ -333,17 +333,9 @@ const Candidats = () => {
         {/* Liste des candidats */}
         <div className="bg-white rounded-[32px] border border-slate-100 shadow-sm overflow-hidden min-h-[400px] flex flex-col">
           {loading ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-slate-400 gap-3 py-20">
-              <Loader2 className="animate-spin text-emerald-500" size={40} />
-              <p className="font-bold text-xs">Chargement des candidats...</p>
-            </div>
+            <Loading text="Chargement des candidats…" />
           ) : candidats.length === 0 ? (
-            <div className="flex-1 flex flex-col items-center justify-center text-slate-400 py-20">
-              <p className="font-bold text-sm">Aucun candidat enregistré</p>
-              <button onClick={openCreateModal} className="text-emerald-500 text-xs mt-2 hover:underline">
-                Ajouter le premier candidat
-              </button>
-            </div>
+            <EmptyState icon={CheckCircle2} title="Aucun candidat enregistré" description="Ajoutez le premier candidat à un scrutin." action={<button onClick={openCreateModal} className="modal-primary-action">Ajouter un candidat</button>} />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full text-left">
@@ -363,26 +355,26 @@ const Candidats = () => {
                         <div className="w-11 h-11 rounded-2xl overflow-hidden bg-slate-200 border border-slate-200">
                           {candidat.photo_path ? (
                             <img
-                              src={`${import.meta.env.VITE_STORAGE_URL}/${candidat.photo_path}`}
-                              alt={candidat.user?.nom}
+                              src={candidatePhotoUrl(candidat.photo_url || candidat.photo_path)}
+                              alt={candidateName(candidat)}
                               className="w-full h-full object-cover"
                             />
                           ) : candidat.user?.photo ? (
                             <img
-                              src={`${import.meta.env.VITE_STORAGE_URL}/${candidat.photo_path}`}
-                              alt={candidat.user?.nom}
+                              src={candidatePhotoUrl(candidat.photo_url || candidat.photo_path)}
+                              alt={candidateName(candidat)}
                               className="w-full h-full object-cover"
                             />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-emerald-50 to-emerald-100 text-emerald-600 font-black text-sm">
-                              {candidat.user?.nom?.charAt(0) || '?'}
+                              {candidateName(candidat).charAt(0)}
                             </div>
                           )}
                         </div>
                       </td>
                       <td className="px-6 py-4">
                         <p className="font-bold text-slate-800 text-sm">
-                          {candidat.user?.nom || `Utilisateur #${candidat.user_id}`}
+                          {candidateName(candidat)}
                         </p>
                         <p className="text-[11px] text-slate-400">{candidat.user?.email}</p>
                       </td>
@@ -412,7 +404,7 @@ const Candidats = () => {
                             <Edit3 size={18} />
                           </button>
                           <button
-                            onClick={() => handleDelete(candidat.id)}
+                            onClick={() => setDeletingId(candidat.id)}
                             className="p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
                           >
                             <Trash2 size={18} />

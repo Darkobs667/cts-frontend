@@ -3,6 +3,7 @@ import VoterLayout from "../Components/VoterLayout";
 import { useLocation, useNavigate } from "react-router";
 import { ShieldCheck, ArrowLeft, Send, CheckCircle, User, ShieldAlert, Lock } from 'lucide-react';
 import api from '../services/api';
+import toast from 'react-hot-toast';
 
 const VoterRecap = () => {
   const location = useLocation();
@@ -37,9 +38,10 @@ const VoterRecap = () => {
       const candidate_id = selectedCandidate.id === 'blanc' ? null : selectedCandidate.id;
       await api.post('/votes', { position_id, candidate_id });
       setIsSubmitted(true);
+      toast.success('Votre vote a été enregistré.');
     } catch (error) {
       const message = error.response?.data?.message || "Erreur lors de l'enregistrement du vote.";
-      alert(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

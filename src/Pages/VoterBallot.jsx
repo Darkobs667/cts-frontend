@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Check, ChevronDown, Loader2, Send, ShieldCheck, User, Vote } from 'lucide-react';
+import { Check, ChevronDown, Send, ShieldCheck, User, Vote } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import toast from 'react-hot-toast';
 import VoterLayout from '../Components/VoterLayout';
 import Modal from '../Components/Modal';
 import api from '../services/api';
 import { candidatePhotoUrl } from '../utils/media';
+import Loading from '../Components/Loading';
 
 export default function VoterBallot() {
   const navigate = useNavigate();
@@ -90,7 +91,7 @@ export default function VoterBallot() {
         </div>
 
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-24"><Loader2 className="animate-spin text-emerald-500" size={30} /><p className="mt-4 text-[10px] font-black uppercase tracking-widest text-slate-400">Préparation du bulletin…</p></div>
+          <Loading text="Chargement du bulletin…" className="py-24" />
         ) : ballots.length === 0 ? (
           <div className="rounded-3xl border border-emerald-100 bg-white px-6 py-20 text-center"><ShieldCheck className="mx-auto text-emerald-500" size={34} /><h2 className="mt-4 text-lg font-black text-emerald-950">Tout est à jour</h2><p className="mt-1 text-sm text-slate-500">Vous avez déjà voté pour tous les scrutins ouverts.</p></div>
         ) : (

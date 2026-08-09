@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import VoterLayout from "../Components/VoterLayout";
 import { useNavigate } from "react-router";
-import { Vote, CheckCircle, Clock, ArrowRight, Zap, CheckSquare, CircleDotDashed, ShieldCheck } from 'lucide-react';
+import { Vote, CheckCircle, Clock, ArrowRight, Zap, CheckSquare, ShieldCheck } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import api from '../services/api';
-import StatCard from '../Components/StatCard';
-
-/* ── Stat card redesigned ── */
-const ModernStatCard = (props) => <div className="fade-up"><StatCard {...props} /></div>;
+import Loading from '../Components/Loading';
 
 /* ── Election row avec bouton Déjà voté ── */
 const ElectionRow = ({ election, index, onVote, hasVoted }) => {
@@ -15,12 +12,12 @@ const ElectionRow = ({ election, index, onVote, hasVoted }) => {
 
   return (
     <article
-      className="group relative overflow-hidden rounded-3xl border border-slate-100 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-950/5 fade-up"
+      className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-lg hover:shadow-emerald-950/5 fade-up"
       style={{ animationDelay: `${index * 70}ms` }}
     >
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400 opacity-0 transition-opacity group-hover:opacity-100" />
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${hasVoted ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-600'}`}>
+        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${hasVoted ? 'bg-slate-100 text-slate-400' : 'bg-emerald-50 text-emerald-600'}`}>
           {hasVoted ? <CheckSquare size={20} /> : <Vote size={20} />}
         </div>
         <div className="min-w-0 flex-1">
@@ -50,7 +47,7 @@ const ElectionRow = ({ election, index, onVote, hasVoted }) => {
         {isActive && !hasVoted ? (
           <button
             onClick={() => onVote(election)}
-            className="inline-flex items-center gap-2 rounded-2xl bg-emerald-600 px-5 py-3 text-[10px] font-black text-white shadow-lg shadow-emerald-500/20 transition-all
+            className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-5 py-3 text-[10px] font-black text-white shadow-lg shadow-emerald-500/20 transition-all
               hover:-translate-y-0.5 hover:bg-emerald-700
               active:scale-95 transition-all duration-200"
           >
@@ -58,7 +55,7 @@ const ElectionRow = ({ election, index, onVote, hasVoted }) => {
             <ArrowRight size={13} />
           </button>
         ) : hasVoted ? (
-          <span className="inline-flex items-center gap-1.5 rounded-2xl bg-slate-100 px-4 py-3 text-slate-400
+          <span className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 px-4 py-3 text-slate-400
             rounded-2xl text-[10px] font-black cursor-not-allowed">
             <CheckSquare size={12} />
             Vote enregistré
@@ -166,20 +163,13 @@ const VoterDashboard = () => {
       `}</style>
 
       {isLoading ? (
-        <div className="flex flex-col items-center justify-center min-h-[70vh]">
-          <div className="relative flex items-center justify-center">
-            <div className="w-16 h-16 border-4 border-slate-100 border-t-emerald-500 rounded-full animate-spin" />
-            <Vote className="absolute text-emerald-500 animate-pulse" size={22} />
-          </div>
-          <p className="mt-6 text-[10px] font-[900] text-slate-400 animate-pulse tracking-widest uppercase">
-            Synchronisation du registre…
-          </p>
-        </div>
+        <Loading text="Chargement de vos scrutins…" className="py-24" />
       ) : (
         <div className="animate-in fade-in duration-500">
 
           {/* ── header ── */}
-          <div className="mb-10 fade-up">
+          <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end fade-up">
+            <div>
             <h1 className="text-xl md:text-2xl font-[900] text-slate-900">
               Tableau de bord électeur
             </h1>
@@ -188,35 +178,23 @@ const VoterDashboard = () => {
               <span className="font-black text-slate-600">{userFullName}</span>
               {' '}dans votre espace de vote sécurisé
             </p>
+            </div>
+            <div className="inline-flex w-fit items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-[10px] font-bold text-emerald-700">
+              <ShieldCheck size={14} /> Session sécurisée
+            </div>
           </div>
 
-          {/* ── stat cards (sans Électeurs inscrits) ── */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-            <ModernStatCard 
-              label="Déjà votés"
-              value={stats.completed}
-              icon={CheckCircle} 
-              accent="bg-blue-500 shadow-lg shadow-blue-100" 
-            />
-            <ModernStatCard 
-              label="À voter"
-              value={stats.remaining}
-              icon={CircleDotDashed}
-              accent="bg-amber-500 shadow-lg shadow-amber-100" 
-            />
-            <ModernStatCard 
-              label="Scrutins ouverts"
-              value={stats.total}
-              icon={Clock}
-              accent="bg-purple-500 shadow-lg shadow-purple-100" 
-            />
-          </div>
+          <section className="mb-6 rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-white p-5 shadow-sm fade-up">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div><p className="text-[10px] font-black uppercase tracking-[0.14em] text-emerald-700">Votre progression</p><h2 className="mt-1 text-lg font-black text-slate-900">{stats.completed} vote{stats.completed > 1 ? 's' : ''} enregistré{stats.completed > 1 ? 's' : ''} sur {stats.total}</h2><p className="mt-1 text-xs text-slate-500">{stats.remaining ? `${stats.remaining} scrutin${stats.remaining > 1 ? 's' : ''} reste${stats.remaining > 1 ? 'nt' : ''} à consulter.` : 'Vous êtes à jour pour les scrutins ouverts.'}</p></div>
+              <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-white text-lg font-black text-emerald-700 shadow-sm ring-1 ring-emerald-100">{stats.total ? Math.round((stats.completed / stats.total) * 100) : 0}%</div>
+            </div>
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-emerald-100"><div className="h-full rounded-full bg-emerald-500 transition-all duration-500" style={{ width: `${stats.total ? (stats.completed / stats.total) * 100 : 0}%` }} /></div>
+          </section>
 
           {/* ── Liste des scrutins ── */}
-          <div
-            className="bg-white rounded-[36px] border border-slate-100 shadow-sm overflow-hidden fade-up"
-            style={{ animationDelay: '220ms' }}
-          >
+          <div className="fade-up" style={{ animationDelay: '220ms' }}>
+          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="px-7 py-6 border-b border-slate-50 flex items-center justify-between">
               <div>
                 <h2 className="text-sm font-[900] text-slate-900">Scrutins disponibles</h2>
@@ -262,6 +240,8 @@ const VoterDashboard = () => {
                 Registre audité — votes anonymisés par Cyber Tech Squad
               </p>
             </div>
+          </section>
+
           </div>
 
         </div>

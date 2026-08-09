@@ -6,6 +6,7 @@ import api from "../services/api";
 import { candidatePhotoUrl } from '../utils/media';
 import toast from 'react-hot-toast';
 import Modal from './Modal';
+import Loading from './Loading';
 
 const VoterChoice = () => {
   const location = useLocation();
@@ -115,15 +116,7 @@ const VoterChoice = () => {
 
         {/* ── loading ── */}
         {loadingCandidates ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <div className="relative">
-              <div className="w-14 h-14 border-4 border-slate-100 border-t-emerald-500 rounded-full animate-spin" />
-              <Vote className="absolute inset-0 m-auto text-emerald-500 animate-pulse" size={20} />
-            </div>
-            <p className="text-[10px] font-black text-slate-400 tracking-widest uppercase animate-pulse">
-              Chargement des candidats…
-            </p>
-          </div>
+          <Loading text="Chargement des candidats…" className="py-24" />
 
         ) : candidates.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 bg-white rounded-3xl border border-slate-100 shadow-sm">

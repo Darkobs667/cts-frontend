@@ -1,203 +1,70 @@
-import { User, Lock, LogIn, ShieldCheck, Mail, Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff, Lock, LogIn, Mail, Phone, ShieldCheck, Vote } from 'lucide-react';
 import { useState } from 'react';
-import { Link, useNavigate } from "react-router"; 
-import authService  from '../services/authService'; // Import du nouveau service
-import logocts from "../assets/logo-cts2-removebg-preview.png";
+import { Link, Navigate, useNavigate } from 'react-router';
+import authService from '../services/authService';
+import logocts from '../assets/logo-cts2-removebg-preview.png';
 import { useAuth } from '../hooks/useAuth';
 
-const LoginCTS = () => {
+export default function LoginCTS() {
   const navigate = useNavigate();
-  const { refreshUser } = useAuth();
+  const { refreshUser, user, loading: sessionLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
-  const [loading, setLoading] = useState(false); // État pour le bouton de chargement
-  const [serverError, setServerError] = useState(''); // Erreur venant de l'API Laravel
-
-  const [formData, setFormData] = useState({
-    identifiant: '',
-    password: ''
-  });
-
-  const [errors, setErrors] = useState({
-    identifiant: '',
-    password: ''
-  });
+  const [loading, setLoading] = useState(false);
+  const [serverError, setServerError] = useState('');
+  const [formData, setFormData] = useState({ identifiant: '', password: '' });
+  const [errors, setErrors] = useState({ identifiant: '', password: '' });
 
   const validateField = (name, value) => {
-    let errorMsg = '';
-    if (name === 'identifiant') {
-      // REGEX STRICTE : n'autorise que le domaine @uadb.edu.sn
-            const uadbRegex = /^[^\s@]+@uadb\.edu\.sn$/;
-            if (value && !uadbRegex.test(value)) {
-                errorMsg = "Seules les adresses @uadb.edu.sn sont autorisées.";
-            }
-    }
-    if (name === 'password') {
-      if (value && value.length < 8) {
-        errorMsg = "Minimum 8 caractères requis.";
-      }
-    }
-    setErrors(prev => ({ ...prev, [name]: errorMsg }));
+    const error = name === 'identifiant' && value && !/^[^\s@]+@uadb\.edu\.sn$/.test(value)
+      ? 'Utilisez votre adresse @uadb.edu.sn.'
+      : name === 'password' && value && value.length < 8 ? 'Minimum 8 caractères requis.' : '';
+    setErrors((current) => ({ ...current, [name]: error }));
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+  const handleChange = ({ target: { name, value } }) => {
+    setFormData((current) => ({ ...current, [name]: value }));
     validateField(name, value);
-    setServerError(''); // On efface l'erreur serveur quand l'utilisateur retape
+    setServerError('');
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (loading) return;
     setLoading(true);
     setServerError('');
-
     try {
-        const response = await authService.login({
-            email: formData.identifiant,
-            password: formData.password
-        });
-
-        if (response.data && response.data.access_token) {
-            localStorage.setItem('user_token', response.data.access_token);
-            localStorage.setItem('user_tokenrefsh', response.data.refresh_token);
-            await refreshUser();
-            
-            // Redirection basée sur le rôle
-            const userRole = response.data.user.role;
-            
-            if (userRole === 'admin') {
-                navigate('/admin');
-            } else if (userRole === 'electeur') {
-                navigate('/voterDashboard');
-            } else {
-                navigate('/voterDashboard');
-            }
-        } else {
-            setServerError("Erreur : Token non reçu du serveur.");
-        }
+      const response = await authService.login({ email: formData.identifiant, password: formData.password });
+      const session = response.data;
+      if (!session?.access_token || !session?.user) throw new Error('Session non reçue.');
+      await refreshUser();
+      navigate(session.user.role === 'admin' ? '/admin' : '/voterDashboard', { replace: true });
     } catch (error) {
-        console.error("Erreur de connexion :", error);
-        const errorMsg = error?.error
-          || error?.message
-          || error.response?.data?.error
-          || error.response?.data?.message
-          || "Identifiants incorrects.";
-        setServerError(errorMsg);
+      setServerError(error?.error || error?.message || error?.response?.data?.message || 'Identifiants incorrects.');
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
-};
+  };
 
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4 font-sans text-slate-800">
-      
-      {/* Logos et Titres */}
-      <div className="text-center mb-10 space-y-4">
-        <div className="flex justify-center gap-6 mb-6">
-          <img src={logocts} alt="Logo CTS" className="h-20 w-auto" />
-        </div>
-        <h1 className="text-2xl font-black uppercase text-slate-900">CYBER TECH SQUAD</h1>
-        <p className="text-slate-500 font-medium">Accédez à votre espace de vote</p>
-      </div>
+  if (sessionLoading) return null;
+  if (user) return <Navigate to={user.role === 'admin' ? '/admin' : '/voterDashboard'} replace />;
 
-      <div className="card w-full max-w-md bg-white shadow-[0_20px_50px_rgba(0,0,0,0.08)]
-       rounded-3xl p-10 border border-slate-50">
-        
-        {/* Message d'erreur général du serveur */}
-        {serverError && (
-          <div className="bg-red-50 text-emerald-400 p-3 rounded-xl text-xs font-bold mb-6
-           text-center border border-red-100">
-            {serverError}
-          </div>
-        )}
-
-        <form onSubmit={handleSubmit} className="space-y-8">
-          
-          {/* Identifiant (Email) */}
-          <div className="form-control w-full">
-            <label className="label py-0 mb-2">
-              <span className="label-text text-xs font-semibold text-slate-900">Email</span>
-            </label>
-            <div className="relative group">
-              <div className="absolute z-10 inset-y-0 left-4 flex items-center
-               pointer-events-none text-slate-400 group-focus-within:text-emerald-500 
-               transition-colors">
-                <Mail size={18}/>
-              </div>
-              <input 
-                name="identifiant"
-                value={formData.identifiant}
-                onChange={handleChange}
-                type="email" 
-                placeholder="prenom.nom@uadb.edu.sn" 
-                className="input w-full h-14 pl-12 bg-slate-50 border-none
-                 focus:ring-2 focus:ring-emerald-400 rounded-2xl
-                  text-slate-700 placeholder:text-slate-300 transition-all font-medium" 
-                required
-              />
-            </div>
-            {errors.identifiant && <span className="text-emerald-400 text-[10px] font-bold mt-1 ml-2">{errors.identifiant}</span>}
-          </div>
-
-          {/* Mot de Passe */}
-          <div className="form-control w-full">
-            <label className="label py-0 mb-2">
-              <span className="label-text text-xs font-semibold text-slate-900">Mot de Passe</span>
-            </label>
-            <div className="relative group">
-              <div className="absolute z-10 inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-500 transition-colors">
-                <Lock size={18}/>
-              </div>
-              <input 
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                type={showPassword ? "text" : "password"} 
-                placeholder="••••••••••••" 
-                className="input w-full h-14 pl-12 bg-slate-50 border-none focus:ring-2
-                 focus:ring-emerald-400 rounded-2xl text-slate-700
-                  placeholder:text-slate-300 transition-all" 
-                required
-              />
-              <button 
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 z-20"
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
-            </div>
-            {errors.password && <span className="text-emerald-400  text-[10px] font-bold mt-1 ml-2">{errors.password}</span>}
-          </div>
-
-          <button 
-            disabled={loading || errors.identifiant || errors.password || !formData.identifiant}
-            className={`btn w-full h-14 ${loading ? 'bg-slate-200' : 
-              'bg-[#00d991] hover:bg-[#00c282]'} border-none
-               text-slate-900 font-bold normal-case rounded-2xl 
-               gap-3 shadow-lg flex items-center justify-center shadow-emerald-100 mt-4 transition-all`}
-            type="submit"
-          >
-            {loading ? (
-              <span className="loading loading-spinner"></span>
-            ) : (
-              <><LogIn size={20} /> Se connecter</>
-            )}
-          </button>
+  return <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-50 px-4 py-8 text-slate-800">
+    <div className="pointer-events-none absolute -left-32 -top-32 h-80 w-80 rounded-full bg-emerald-100/70 blur-3xl" />
+    <div className="pointer-events-none absolute -bottom-36 -right-24 h-96 w-96 rounded-full bg-emerald-50 blur-3xl" />
+    <section className="relative w-full max-w-[23rem]">
+      <header className="mb-6 text-center"><div className="mb-4 flex items-center justify-center gap-2.5 whitespace-nowrap"><img src={logocts} alt="Cyber Tech Squad" className="h-14 w-14 object-contain mix-blend-multiply" /><span className="text-left text-lg font-black text-slate-900">Cyber Tech <span className="text-emerald-600">Squad</span></span></div><p className="mt-2 text-sm text-slate-500">Accedez à votre espace électoral.</p></header>
+      <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/50 sm:p-7">
+        {serverError && <div className="mb-5 rounded-xl border border-red-100 bg-red-50 p-3 text-center text-xs font-semibold text-red-700">{serverError}</div>}
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="flex items-center gap-3"><span className="h-px flex-1 bg-slate-100" /><span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-100 bg-emerald-50 text-emerald-600"><Vote size={22} /></span><span className="h-px flex-1 bg-slate-100" /></div>
+          <div><label className="mb-2 block text-xs font-bold text-slate-700">Adresse institutionnelle</label><div className="relative"><Mail size={17} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" /><input name="identifiant" value={formData.identifiant} onChange={handleChange} type="email" placeholder="prenom.nom@uadb.edu.sn" className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100" required /></div>{errors.identifiant && <p className="mt-1.5 text-[11px] font-medium text-red-600">{errors.identifiant}</p>}</div>
+          <div><label className="mb-2 block text-xs font-bold text-slate-700">Mot de passe</label><div className="relative"><Lock size={17} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" /><input name="password" value={formData.password} onChange={handleChange} type={showPassword ? 'text' : 'password'} placeholder="••••••••••••" className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-11 text-sm outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100" required /><button type="button" onClick={() => setShowPassword((value) => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600" aria-label="Afficher ou masquer le mot de passe">{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div>{errors.password && <p className="mt-1.5 text-[11px] font-medium text-red-600">{errors.password}</p>}</div>
+          <button disabled={loading || Boolean(errors.identifiant || errors.password) || !formData.identifiant} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60" type="submit">{loading ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <LogIn size={17} />}{loading ? 'Connexion…' : 'Se connecter'}</button>
         </form>
-
-        <p className="text-center mt-8 text-sm text-slate-500 font-medium">
-          Pas encore inscrit ? <Link to="/signup" className="text-emerald-600 font-bold hover:underline">S'inscrire</Link>
-        </p>
+        <div className="mt-5 rounded-xl border border-emerald-100 bg-emerald-50/70 p-3"><div className="flex items-start gap-2"><Phone size={14} className="mt-0.5 shrink-0 text-emerald-600" /><p className="text-[10px] leading-relaxed text-emerald-900">Mot de passe oublié ? Contactez un administrateur au <a className="whitespace-nowrap font-black underline" href="tel:+221768292110">+221 76 829 21 10</a>.</p></div></div>
+        <p className="mt-5 text-center text-xs text-slate-500">Pas encore inscrit ? <Link to="/signup" className="font-bold text-emerald-700 hover:underline">Créer un compte</Link></p>
       </div>
-
-      <div className="mt-12 flex items-center gap-2 text-[10px] font-black text-emerald-500
-       bg-emerald-50/50 px-4 py-2 rounded-full border border-emerald-100">
-        <ShieldCheck size={14} />
-         TECHNOLOGIE-SÉCURITÉ-INNOVATION
-      </div>
-    </div>
-  );
-};
-
-export default LoginCTS;
+      <p className="mt-5 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-wide text-slate-400"><ShieldCheck size={13} className="text-emerald-500" /> Technologie · Sécurité · Innovation</p>
+    </section>
+  </main>;
+}

@@ -3,6 +3,7 @@ import VoterLayout from "../Components/VoterLayout";
 import { ShieldCheck, Download, History, RefreshCw, CheckCircle2, Clock, Hash, CalendarDays, ReceiptText } from 'lucide-react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import Loading from '../Components/Loading';
 
 /* ── Animated counter ── */
 const AnimatedNumber = ({ value, duration = 700 }) => {
@@ -123,15 +124,7 @@ const VoterHistory = () => {
       `}</style>
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center min-h-[70vh]">
-          <div className="relative flex items-center justify-center">
-            <div className="w-14 h-14 border-4 border-slate-100 border-t-emerald-500 rounded-full animate-spin" />
-            <ShieldCheck className="absolute text-emerald-500 animate-pulse" size={20} />
-          </div>
-          <p className="mt-5 text-[10px] font-[900] text-slate-400 animate-pulse tracking-widest uppercase">
-            Vérification de l'intégrité du registre…
-          </p>
-        </div>
+        <Loading text="Chargement de vos votes…" className="min-h-[70vh]" />
       ) : (
         <div className="animate-in fade-in duration-500 pb-20 max-w-4xl mx-auto">
 

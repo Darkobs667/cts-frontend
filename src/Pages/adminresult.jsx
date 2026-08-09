@@ -1,125 +1,52 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { Activity, Crown, FileDown, Printer, Radio, RefreshCw, ShieldCheck, Users, XCircle } from 'lucide-react';
 import AdminLayout from '../Components/AdminLayout';
-import {
-  Users, TrendingUp, ShieldCheck, Loader2, User, Radio, Timer, FileDown, XCircle, Printer
-} from 'lucide-react';
 import api from '../services/api';
 import { candidatePhotoUrl } from '../utils/media';
 import ConfirmDialog from '../Components/ConfirmDialog';
 import Loading from '../Components/Loading';
 import EmptyState from '../Components/EmptyState';
 
-/* ── Composants utilitaires (inchangés) ── */
-const LiveDot = () => (
-  <span className="relative inline-flex h-2 w-2">
-    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
-    <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
+const LiveIndicator = ({ refreshing }) => (
+  <span className="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-emerald-50 px-3 py-1.5 text-[10px] font-black text-emerald-700">
+    <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" /><span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" /></span>
+    {refreshing ? 'Actualisation…' : 'Résultats en direct'}
   </span>
 );
 
-const AnimatedNumber = ({ value, duration = 800 }) => {
-  const [display, setDisplay] = useState(0);
-  const raf = useRef(null);
-  useEffect(() => {
-    const start = display;
-    const end = Number(value);
-    const startTime = performance.now();
-    const tick = (now) => {
-      const elapsed = now - startTime;
-      const progress = Math.min(elapsed / duration, 1);
-      const eased = 1 - Math.pow(1 - progress, 3);
-      setDisplay(Math.round(start + (end - start) * eased));
-      if (progress < 1) raf.current = requestAnimationFrame(tick);
-    };
-    raf.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf.current);
-  }, [value]);
-  return <>{display.toLocaleString()}</>;
-};
+const CandidateResult = ({ candidate, index, totalVotes }) => {
+  const votes = Number(candidate.votes_count || 0);
+  const percent = totalVotes ? Math.round((votes / totalVotes) * 1000) / 10 : 0;
+  const isLeader = index === 0 && votes > 0;
 
-const RingProgress = ({ value }) => {
-  const r = 64;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - (value / 100) * circ;
   return (
-    <div className="relative w-44 h-44 flex items-center justify-center mx-auto">
-      <svg className="absolute inset-0 w-full h-full -rotate-90" viewBox="0 0 144 144">
-        <circle cx="72" cy="72" r={r} fill="none" stroke="#f1f5f9" strokeWidth="9" />
-        <circle
-          cx="72" cy="72" r={r} fill="none"
-          stroke="url(#ringGradLight)" strokeWidth="9"
-          strokeLinecap="round"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(.4,0,.2,1)' }}
-        />
-        <defs>
-          <linearGradient id="ringGradLight" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#34d399" />
-            <stop offset="100%" stopColor="#10b981" />
-          </linearGradient>
-        </defs>
-      </svg>
-      <div className="flex flex-col items-center z-10">
-        <span className="text-3xl font-black text-slate-900 leading-none">
-          <AnimatedNumber value={value} />%
-        </span>
-        <span className="text-[9px] font-bold tracking-widest text-slate-400 mt-1 uppercase">
-          participation
-        </span>
+    <div className={`rounded-2xl border p-3.5 transition-colors ${isLeader ? 'border-emerald-200 bg-emerald-50/60' : 'border-slate-100 bg-white'}`}>
+      <div className="flex items-center gap-3">
+        <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-[10px] font-black ${isLeader ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-400'}`}>{isLeader ? <Crown size={14} /> : index + 1}</span>
+        <div className="h-10 w-10 shrink-0 overflow-hidden rounded-xl border border-white bg-slate-100 shadow-sm">
+          {candidate.photo_path || candidate.photo_url ? <img src={candidatePhotoUrl(candidate.photo_url || candidate.photo_path)} alt={candidate.name} className="h-full w-full object-cover" /> : <div className="flex h-full w-full items-center justify-center text-xs font-black text-slate-400">{candidate.name?.slice(0, 1)}</div>}
+        </div>
+        <div className="min-w-0 flex-1"><p className="truncate text-sm font-black text-slate-800">{candidate.name}</p><p className="mt-0.5 text-[10px] font-medium text-slate-400">{votes.toLocaleString('fr-FR')} voix</p></div>
+        <span className={`text-right text-lg font-black tabular-nums ${isLeader ? 'text-emerald-700' : 'text-slate-700'}`}>{percent}%</span>
       </div>
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100"><div className={`h-full rounded-full transition-all duration-1000 ease-out ${isLeader ? 'bg-gradient-to-r from-emerald-400 to-emerald-600' : 'bg-slate-300'}`} style={{ width: `${percent}%` }} /></div>
     </div>
   );
 };
 
-const CandidateRow = ({ c, index, votersCount, tickPulse }) => {
-  const percent = votersCount > 0 ? ((c.votes_count / votersCount) * 100).toFixed(1) : 0;
-  const isLeader = index === 0 && c.votes_count > 0;
-  return (
-    <div className="group relative">
-      {isLeader && <span className="absolute -left-8 top-1/2 -translate-y-1/2 w-1 h-10 rounded-full bg-emerald-500" />}
-      <div className="flex items-center gap-4 mb-3">
-        <span className="text-[11px] font-black text-slate-300 w-4 shrink-0 text-right">{index + 1}</span>
-        <div className={`w-11 h-11 rounded-2xl overflow-hidden shrink-0 border-2 transition-all duration-300 ${isLeader ? 'border-emerald-400' : 'border-slate-100'}`}>
-          {c.photo_path ? (
-            <img src={candidatePhotoUrl(c.photo_url || c.photo_path)} className="w-full h-full object-cover" alt={c.name} />
-          ) : (
-            <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300"><User size={16} /></div>
-          )}
-        </div>
-        <div className="flex-1 min-w-0">
-          <h4 className="text-sm font-black text-slate-800 truncate leading-tight">{c.name}</h4>
-          <p className="text-[10px] font-bold text-slate-400 mt-0.5 flex items-center gap-1.5">
-            <AnimatedNumber value={c.votes_count} /> voix comptabilisées
-            {tickPulse && isLeader && <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />}
-          </p>
-        </div>
-        <span className={`text-xl font-black tabular-nums ${isLeader ? 'text-emerald-600' : 'text-slate-900'}`}>{percent}%</span>
-      </div>
-      <div className="ml-9 h-2.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200 shadow-inner">
-        <div className={`h-full rounded-full transition-all duration-1000 ease-out ${isLeader ? 'bg-gradient-to-r from-emerald-400 to-emerald-600' : 'bg-slate-300'}`} style={{ width: `${percent}%` }} />
-      </div>
-    </div>
-  );
-};
-
-// Carte d'un scrutin (affichage des résultats) - AVEC LEADER DANS L'EN-TÊTE
-const ElectionCard = ({ election, totalInscritsGlobaux, onClose }) => {
-  const { id, title, is_active, total_votes, candidates } = election;
-  const votersCount = total_votes;
-  const participationRate = totalInscritsGlobaux > 0 ? ((votersCount / totalInscritsGlobaux) * 100).toFixed(1) : 0;
-  const sortedCandidates = [...candidates].sort((a, b) => b.votes_count - a.votes_count);
-  const leader = sortedCandidates[0];
-  const [closing, setClosing] = useState(false);
+const ElectionResultsCard = ({ election, totalVoters, onClose }) => {
   const [confirmClose, setConfirmClose] = useState(false);
+  const [closing, setClosing] = useState(false);
+  const candidates = [...(election.candidates || [])].sort((a, b) => Number(b.votes_count || 0) - Number(a.votes_count || 0));
+  const votes = Number(election.total_votes || 0);
+  const participation = totalVoters ? Math.round((votes / totalVoters) * 100) : 0;
+  const leader = candidates[0];
 
-  const handleClose = async () => {
+  const closeElection = async () => {
     setClosing(true);
     try {
-      await api.put(`/positions/${id}`, { is_active: false });
-      if (onClose) onClose(id);
-    } catch (error) {
-      console.error("Erreur lors de la clôture", error);
+      await api.put(`/positions/${election.id}`, { is_active: false });
+      await onClose();
     } finally {
       setClosing(false);
       setConfirmClose(false);
@@ -127,253 +54,85 @@ const ElectionCard = ({ election, totalInscritsGlobaux, onClose }) => {
   };
 
   return (
-    <div className="bg-white rounded-[40px] border border-slate-100 shadow-sm overflow-hidden">
-      <ConfirmDialog isOpen={confirmClose} onClose={() => !closing && setConfirmClose(false)} onConfirm={handleClose} loading={closing} title="Clôturer ce scrutin ?" description={`Le scrutin « ${title} » sera fermé et ne recevra plus de vote.`} confirmLabel="Clôturer le scrutin" />
-      <div className="p-8">
-        {/* En-tête avec titre, statut, leader et bouton clôturer */}
-        <div className="flex flex-wrap justify-between items-start gap-4 mb-6">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              {is_active && <LiveDot />}
-              <h2 className="text-xl font-[900] text-slate-900">{title}</h2>
-            </div>
-            <div className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[9px] font-black uppercase ${is_active ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-50 text-slate-500 border border-slate-200'}`}>
-              <span className={`w-1.5 h-1.5 rounded-full ${is_active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
-              {is_active ? 'En cours' : 'Clôturé'}
-            </div>
+    <article className="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+      <ConfirmDialog isOpen={confirmClose} onClose={() => !closing && setConfirmClose(false)} onConfirm={closeElection} loading={closing} title="Clôturer ce scrutin ?" description={`Le scrutin « ${election.title} » ne recevra plus aucun vote.`} confirmLabel="Clôturer" tone="danger" />
+      <header className="border-b border-slate-100 bg-gradient-to-r from-emerald-50 via-white to-white p-5 sm:p-6">
+        <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+          <div className="min-w-0">
+            <div className="mb-2 flex flex-wrap items-center gap-2"><span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[9px] font-black uppercase tracking-wide ${election.is_active ? 'border-emerald-200 bg-emerald-100 text-emerald-700' : 'border-slate-200 bg-slate-100 text-slate-500'}`}><span className={`h-1.5 w-1.5 rounded-full ${election.is_active ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />{election.is_active ? 'Scrutin ouvert' : 'Scrutin clôturé'}</span><span className="text-[10px] font-medium text-slate-400">{votes.toLocaleString('fr-FR')} vote{votes !== 1 ? 's' : ''} comptabilisé{votes !== 1 ? 's' : ''}</span></div>
+            <h2 className="break-words text-xl font-black leading-tight text-slate-900">{election.title}</h2>
+            <p className="mt-1 text-xs leading-relaxed text-slate-500">Répartition actualisée automatiquement à chaque nouveau vote.</p>
           </div>
-
-          {/* Partie droite : leader (si votes) + bouton clôturer */}
-          <div className="flex items-center gap-4 flex-wrap">
-            {leader && leader.votes_count > 0 && (
-              <div className="flex items-center gap-2.5 bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-2 shadow-sm">
-                <div className="w-8 h-8 rounded-xl overflow-hidden ring-2 ring-emerald-400 shrink-0">
-                  {leader.photo_path ? (
-                    <img
-                      src={candidatePhotoUrl(leader.photo_url || leader.photo_path)}
-                      className="w-full h-full object-cover"
-                      alt={leader.name}
-                    />
-                  ) : (
-                    <div className="w-full h-full bg-slate-100 flex items-center justify-center">
-                      <User size={14} className="text-slate-400" />
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="text-[8px] font-black text-emerald-600 tracking-widest uppercase leading-none mb-0.5">
-                    En tête
-                  </p>
-                  <p className="text-sm font-black text-slate-800 leading-tight">
-                    {leader.name}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {is_active && (
-              <button
-              onClick={() => setConfirmClose(true)}
-                disabled={closing}
-                className="flex items-center gap-2 px-4 py-2 rounded-2xl bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 transition-all text-xs font-black"
-              >
-                <XCircle size={16} /> {closing ? 'Fermeture...' : 'Clôturer'}
-              </button>
-            )}
+          <div className="flex flex-wrap items-center gap-3">
+            {leader?.votes_count > 0 && <div className="flex items-center gap-2 rounded-2xl border border-emerald-200 bg-white px-3 py-2 shadow-sm"><Crown size={16} className="text-amber-500" /><div><p className="text-[8px] font-black uppercase tracking-wider text-emerald-600">En tête</p><p className="max-w-36 truncate text-xs font-black text-slate-800">{leader.name}</p></div></div>}
+            {election.is_active && <button type="button" onClick={() => setConfirmClose(true)} className="inline-flex items-center gap-2 rounded-xl border border-red-200 bg-white px-3.5 py-2.5 text-[10px] font-black text-red-600 transition hover:bg-red-50"><XCircle size={15} /> Clôturer</button>}
           </div>
         </div>
+      </header>
 
-        {/* Résultats (inchangés) */}
-        <div className="flex flex-col lg:flex-row gap-8">
-          <div className="flex-1">
-            <div className="flex justify-between items-center mb-6">
-              <div className="flex items-center gap-2">
-                <Users size={14} className="text-slate-300" />
-                <h3 className="text-[11px] font-black text-slate-900">Répartition des voix</h3>
-              </div>
-              <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-full">
-                <Radio size={9} className="text-emerald-500" />
-                <span className="text-[9px] font-black text-emerald-600"><AnimatedNumber value={votersCount} /> votes</span>
-              </div>
-            </div>
-            <div className="space-y-8">
-              {sortedCandidates.map((c, i) => (
-                <CandidateRow key={i} c={c} index={i} votersCount={votersCount} tickPulse={false} />
-              ))}
-            </div>
-          </div>
-          <div className="w-full lg:w-80 bg-slate-50 rounded-3xl p-6 flex flex-col items-center gap-4">
-            <p className="text-[9px] font-black text-slate-400 tracking-widest uppercase">Taux de participation</p>
-            <RingProgress value={parseFloat(participationRate)} />
-            <div className="grid grid-cols-2 gap-3 w-full">
-              <div className="text-center p-3 bg-white rounded-2xl border border-slate-100">
-                <p className="text-xl font-[900] text-slate-900"><AnimatedNumber value={votersCount} /></p>
-                <p className="text-[8px] font-black text-slate-400 uppercase">Votants</p>
-              </div>
-              <div className="text-center p-3 bg-white rounded-2xl border border-slate-100">
-                <p className="text-xl font-[900] text-slate-400"><AnimatedNumber value={totalInscritsGlobaux} /></p>
-                <p className="text-[8px] font-black text-slate-400 uppercase">Inscrits</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-2 mt-2">
-              <TrendingUp size={11} className="text-slate-300" />
-              <p className="text-[9px] font-bold text-slate-400">Les votes sont anonymes.</p>
-            </div>
-          </div>
-        </div>
+      <div className="grid gap-5 p-5 sm:p-6 lg:grid-cols-[minmax(0,1fr)_220px]">
+        <section>
+          <div className="mb-4 flex items-center justify-between"><div className="flex items-center gap-2"><Radio size={15} className="text-emerald-500" /><h3 className="text-sm font-black text-slate-800">Classement des candidats</h3></div><span className="text-[10px] font-bold text-slate-400">Part des voix</span></div>
+          {candidates.length ? <div className="space-y-3">{candidates.map((candidate, index) => <CandidateResult key={candidate.id} candidate={candidate} index={index} totalVotes={votes} />)}</div> : <div className="rounded-2xl border border-dashed border-slate-200 py-10 text-center text-xs font-medium text-slate-400">Aucun candidat validé pour ce scrutin.</div>}
+        </section>
+        <aside className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+          <p className="text-[9px] font-black uppercase tracking-[0.15em] text-slate-400">Participation</p>
+          <p className="mt-2 text-4xl font-black text-slate-900">{participation}%</p>
+          <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-white shadow-inner"><div className="h-full rounded-full bg-emerald-500 transition-all duration-1000" style={{ width: `${participation}%` }} /></div>
+          <div className="mt-5 space-y-3 border-t border-slate-200 pt-4"><div className="flex items-center justify-between text-xs"><span className="text-slate-500">Votants</span><span className="font-black text-slate-800">{votes.toLocaleString('fr-FR')}</span></div><div className="flex items-center justify-between text-xs"><span className="text-slate-500">Électeurs inscrits</span><span className="font-black text-slate-800">{totalVoters.toLocaleString('fr-FR')}</span></div></div>
+          <div className="mt-5 flex items-start gap-2 rounded-xl bg-white p-3 text-[10px] leading-relaxed text-slate-500"><ShieldCheck size={14} className="mt-0.5 shrink-0 text-emerald-500" />Les résultats sont anonymisés et contrôlés par le serveur.</div>
+        </aside>
       </div>
-    </div>
+    </article>
   );
 };
 
-/* ── Page principale (inchangée) ── */
-const AdminresultsPage = () => {
+export default function AdminresultsPage() {
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [elections, setElections] = useState([]);
-  const [totalInscrits, setTotalInscrits] = useState(0);
+  const [totalVoters, setTotalVoters] = useState(0);
   const [lastRefresh, setLastRefresh] = useState(null);
 
-  const fetchAllResults = async () => {
+  const refreshResults = useCallback(async ({ initial = false } = {}) => {
+    if (!initial) setRefreshing(true);
     try {
-      const response = await api.get('/votes/results/all');
-      if (response.data?.success) {
-        setElections(response.data.data);
-        setLastRefresh(new Date());
-      }
+      const [resultsResponse, statsResponse] = await Promise.all([api.get('/votes/results/all'), api.get('/admin/stats-globales')]);
+      if (resultsResponse.data?.success) setElections(resultsResponse.data.data || []);
+      if (statsResponse.data?.data) setTotalVoters(Number(statsResponse.data.data.totalInscrits || 0));
+      setLastRefresh(new Date());
     } catch (error) {
-      console.error('Erreur chargement résultats:', error);
+      console.error('Impossible d’actualiser les résultats.', error);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
-
-  const fetchStats = async () => {
-    try {
-      const statsRes = await api.get('/admin/stats-globales');
-      if (statsRes.data?.data) {
-        setTotalInscrits(statsRes.data.data.totalInscrits || 0);
-      }
-    } catch (error) {
-      console.warn('Impossible de récupérer les stats globales', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchStats();
-    fetchAllResults();
-    const interval = setInterval(fetchAllResults, 10000);
-    return () => clearInterval(interval);
   }, []);
 
-  const handleCloseElection = (closedId) => {
-    setElections(prev => prev.map(e => e.id === closedId ? { ...e, is_active: false } : e));
+  useEffect(() => {
+    refreshResults({ initial: true });
+    const interval = window.setInterval(() => refreshResults(), 5000);
+    return () => window.clearInterval(interval);
+  }, [refreshResults]);
+
+  const exportPdf = async () => {
+    const response = await api.get('/votes/results/pdf', { responseType: 'blob' });
+    const url = URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'resultats-scrutins.pdf';
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
-  const handleExportPDF = async () => {
-    try {
-      const response = await api.get('/votes/results/pdf', {
-        responseType: 'blob',
-      });
-      const url = window.URL.createObjectURL(new Blob([response.data]));
-      const link = document.createElement('a');
-      link.href = url;
-      link.setAttribute('download', 'resultats_scrutins.pdf');
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Erreur lors du téléchargement du PDF :', error);
-    }
-  };
-
-  if (loading) {
-    return (
-      <AdminLayout activePage="results">
-        <div className="flex h-[70vh] flex-col items-center justify-center">
-          <Loader2 className="animate-spin text-emerald-500" size={48} />
-          <p className="mt-4 text-[10px] font-black text-slate-400 animate-pulse uppercase">Chargement des résultats...</p>
-        </div>
-      </AdminLayout>
-    );
-  }
-
-  if (elections.length === 0) {
-    return (
-      <AdminLayout activePage="results">
-        <div className="text-center py-20">
-          <p className="text-slate-400 font-black uppercase tracking-widest text-xs">Aucun scrutin disponible.</p>
-        </div>
-      </AdminLayout>
-    );
-  }
-
-  return (
-    <AdminLayout activePage="results">
-      <div className="mb-8">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              <LiveDot />
-              <span className="text-[9px] font-black tracking-[0.2em] text-red-500 uppercase">Live</span>
-              <span className="text-[9px] text-slate-400 font-medium">
-                · mise à jour toutes les 10s
-                {lastRefresh && ` · ${lastRefresh.toLocaleTimeString('fr-FR')}`}
-              </span>
-            </div>
-            <h1 className="text-xl md:text-2xl font-[900] text-slate-900">Résultats des scrutins</h1>
-          </div>
-
-          <div className="flex gap-3">
-            <button
-              onClick={handlePrint}
-              className="flex items-center gap-2 bg-white border border-slate-200 text-slate-700 px-5 py-2.5 rounded-2xl shadow-sm hover:bg-slate-50 transition-all font-black text-xs"
-            >
-              <Printer size={18} /> Imprimer
-            </button>
-            <button
-              onClick={handleExportPDF}
-              className="flex items-center gap-2 bg-emerald-50 text-emerald-700 border border-emerald-200 px-5 py-2.5 rounded-2xl shadow-sm hover:bg-emerald-100 transition-all font-black text-xs"
-            >
-              <FileDown size={18} /> Télécharger PDF
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-8 print:space-y-4 print:break-inside-avoid">
-        {elections.map(election => (
-          <ElectionCard
-            key={election.id}
-            election={election}
-            totalInscritsGlobaux={totalInscrits}
-            onClose={handleCloseElection}
-          />
-        ))}
-      </div>
-
-      <style>{`
-        @media print {
-          .sidebar, .no-print, .print\\:hidden {
-            display: none !important;
-          }
-          body {
-            background: white;
-            margin: 0;
-            padding: 20px;
-          }
-          .rounded-\\[40px\\], .rounded-3xl, .rounded-2xl {
-            box-shadow: none !important;
-            border: 1px solid #ddd !important;
-          }
-        }
-      `}</style>
-    </AdminLayout>
-  );
-};
-
-export default AdminresultsPage;
+  return <AdminLayout activePage="adminresultsPage">
+    <div className="mx-auto max-w-6xl pb-10">
+      <header className="mb-7 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div><LiveIndicator refreshing={refreshing} /><h1 className="mt-3 text-2xl font-black text-slate-900">Résultats des scrutins</h1><p className="mt-1 text-xs text-slate-500">Les barres et les classements évoluent automatiquement, sans recharger la page.</p></div>
+        <div className="flex items-center gap-2"><span className="hidden text-[10px] font-medium text-slate-400 lg:block">{lastRefresh ? `Mis à jour à ${lastRefresh.toLocaleTimeString('fr-FR')}` : 'Connexion aux résultats…'}</span><button type="button" onClick={() => window.print()} className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3.5 py-2.5 text-[10px] font-black text-slate-600 hover:bg-slate-50"><Printer size={15} /> Imprimer</button><button type="button" onClick={exportPdf} className="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-3.5 py-2.5 text-[10px] font-black text-white shadow-lg shadow-emerald-500/20 hover:bg-emerald-700"><FileDown size={15} /> Exporter</button></div>
+      </header>
+      <div className="mb-6 grid gap-3 sm:grid-cols-3"><div className="rounded-2xl border border-slate-200 bg-white p-4"><p className="text-[10px] font-medium text-slate-500">Scrutins suivis</p><p className="mt-1 text-2xl font-black text-slate-900">{elections.length}</p></div><div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-4"><p className="text-[10px] font-medium text-emerald-700">Scrutins ouverts</p><p className="mt-1 text-2xl font-black text-emerald-800">{elections.filter((election) => election.is_active).length}</p></div><div className="rounded-2xl border border-slate-200 bg-white p-4"><p className="text-[10px] font-medium text-slate-500">Total des votes</p><p className="mt-1 text-2xl font-black text-slate-900">{elections.reduce((sum, election) => sum + Number(election.total_votes || 0), 0).toLocaleString('fr-FR')}</p></div></div>
+      {loading ? <Loading text="Chargement des résultats…" className="py-24" /> : elections.length ? <div className="space-y-5">{elections.map((election) => <ElectionResultsCard key={election.id} election={election} totalVoters={totalVoters} onClose={refreshResults} />)}</div> : <EmptyState icon={Activity} title="Aucun scrutin à suivre" description="Les résultats apparaîtront ici dès qu’un scrutin sera créé." />}
+    </div>
+  </AdminLayout>;
+}

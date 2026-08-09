@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import Logocts from "../assets/logo-cts2-removebg-preview.png";
-import { LayoutDashboard, CheckCircle, User, LogOut, Menu, X, Vote, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, CheckCircle, LogOut, Menu, X, Vote } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth'; // ← IMPORTANT : utiliser useAuth
 
 /* ── nav item ── */
@@ -38,7 +38,6 @@ const NavItem = ({ item, isActive }) => (
 
 const VoterLayout = ({ children, activePage }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -49,15 +48,11 @@ const VoterLayout = ({ children, activePage }) => {
     { id: 'dashboard',        label: 'Tableau de bord',            icon: LayoutDashboard, to: '/voterDashboard' },
     { id: 'scrtins & postes', label: 'Postes disponibles', icon: Vote,         to: '/scrutins'      },
     { id: 'votes',            label: 'Mes Votes',                  icon: CheckCircle,     to: '/voterHistory'  },
-    { id: 'profile',          label: 'Profil',                     icon: User,            to: '/voterProfile'  },
   ];
 
-  const handleLogout = () => {
-    setIsLoggingOut(true);
-    setTimeout(() => {
-      logout(); // ← utiliser la fonction logout du hook
-      navigate('/login');
-    }, 1200);
+  const handleLogout = async () => {
+    await logout();
+    navigate('/login', { replace: true });
   };
 
   // Données utilisateur sécurisées (viennent du serveur, pas du localStorage modifiable)
@@ -65,33 +60,13 @@ const VoterLayout = ({ children, activePage }) => {
   const userInitials = user ? `${user.first_name?.charAt(0) || ''}${user.last_name?.charAt(0) || ''}`.toUpperCase() : '??';
   const userRole = user?.role === 'admin' ? 'Administrateur' : 'Électeur';
 
-  // Pendant le chargement, on affiche un état neutre
+  // La vérification de session reste silencieuse pour ne pas interrompre le parcours.
   if (loading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500 mx-auto"></div>
-          <p className="mt-4 text-slate-500 text-sm">Chargement de l'interface...</p>
-        </div>
-      </div>
-    );
+    return null;
   }
 
   return (
-    <div className={`min-h-screen bg-slate-50 text-slate-900 transition-opacity duration-500 ${
-      isLoggingOut ? 'opacity-0' : 'opacity-100'
-    }`}>
-
-      {/* ── logout overlay ── */}
-      {isLoggingOut && (
-        <div className="fixed inset-0 z-[100] bg-slate-900 flex flex-col items-center
-          justify-center text-white animate-in fade-in duration-300">
-          <ShieldAlert size={44} className="text-emerald-500 animate-bounce mb-4" />
-          <p className="text-[10px] font-black tracking-widest text-emerald-500 uppercase">
-            Fermeture de la session sécurisée…
-          </p>
-        </div>
-      )}
+    <div className="min-h-screen bg-slate-50 text-slate-900">
 
       {/* ── mobile backdrop ── */}
       {isSidebarOpen && (
@@ -111,9 +86,7 @@ const VoterLayout = ({ children, activePage }) => {
         {/* logo */}
         <div className="px-6 py-6 flex items-center justify-between border-b border-slate-50">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl overflow-hidden border border-slate-100 shadow-sm shrink-0">
-              <img src={Logocts} className="w-full h-full object-contain" alt="logo cts" />
-            </div>
+            <img src={Logocts} className="h-10 w-10 shrink-0 object-contain mix-blend-multiply" alt="logo cts" />
             <div className="leading-tight">
               <span className="block text-[9px] font-[900] uppercase text-slate-300 tracking-widest">
                 Cyber Tech
@@ -162,17 +135,16 @@ const VoterLayout = ({ children, activePage }) => {
         <div className="px-3 pb-4 border-t border-slate-50 pt-3">
           <button
             onClick={handleLogout}
-            disabled={isLoggingOut}
             className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl
               text-red-400 hover:bg-red-50 hover:text-red-500
-              transition-all duration-200 active:scale-95 group disabled:opacity-60"
+              transition-all duration-200 active:scale-95 group"
           >
             <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center shrink-0
               group-hover:bg-red-100 transition-colors">
               <LogOut size={15} className="group-hover:-translate-x-0.5 transition-transform" />
             </div>
             <span className="text-[11px] font-[900]">
-              {isLoggingOut ? 'Déconnexion…' : 'Déconnexion'}
+              Déconnexion
             </span>
           </button>
         </div>

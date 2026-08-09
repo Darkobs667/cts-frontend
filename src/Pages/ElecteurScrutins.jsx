@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import VoterLayout from "../Components/VoterLayout";
-import { ChevronDown, ChevronUp, Loader2, User, Vote, FilePlus, X, Camera, CheckCircle2, AlertCircle } from 'lucide-react';
+import { ChevronDown, ChevronUp, Loader2, User, Vote, FilePlus, Camera, CheckCircle2, AlertCircle } from 'lucide-react';
 import api from '../services/api';
 import { candidatePhotoUrl } from '../utils/media';
 import toast from 'react-hot-toast';
+import Modal from '../Components/Modal';
+import Loading from '../Components/Loading';
 
 const ElecteurScrutins = () => {
   const [loading, setLoading] = useState(true);
@@ -105,34 +107,24 @@ const ElecteurScrutins = () => {
         }
         .fade-up { animation: fadeUp .42s ease both; }
 
-        @keyframes modalIn {
-          from { opacity: 0; transform: scale(.96) translateY(10px); }
-          to   { opacity: 1; transform: scale(1) translateY(0); }
-        }
-        .modal-in { animation: modalIn .3s cubic-bezier(.34,1.56,.64,1) both; }
       `}</style>
 
       <div className="max-w-3xl mx-auto pb-20">
 
         {/* ── header ── */}
-        <div className="mb-8 fade-up">
+        <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between fade-up">
+          <div>
           <h1 className="text-xl md:text-2xl font-[900] text-slate-900">Tous les scrutins</h1>
           <p className="text-slate-400 text-xs font-medium mt-1">
             Consultez les postes et leurs candidats, et postulez si vous le souhaitez
           </p>
+          </div>
+          <span className="inline-flex w-fit items-center gap-1.5 rounded-xl border border-emerald-100 bg-emerald-50 px-3 py-2 text-[10px] font-bold text-emerald-700"><Vote size={13} /> {positions.length} poste{positions.length > 1 ? 's' : ''}</span>
         </div>
 
         {/* ── loading ── */}
         {loading ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-4">
-            <div className="relative">
-              <div className="w-14 h-14 border-4 border-slate-100 border-t-emerald-500 rounded-full animate-spin" />
-              <Vote className="absolute inset-0 m-auto text-emerald-500 animate-pulse" size={18} />
-            </div>
-            <p className="text-[10px] font-black text-slate-400 tracking-widest uppercase animate-pulse">
-              Chargement des scrutins…
-            </p>
-          </div>
+          <Loading text="Chargement des scrutins…" className="py-24" />
 
         ) : positions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-24 bg-white rounded-3xl border border-slate-100 shadow-sm fade-up">
@@ -143,7 +135,9 @@ const ElecteurScrutins = () => {
           </div>
 
         ) : (
-          <div className="flex flex-col gap-3">
+          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="border-b border-slate-100 px-5 py-4"><h2 className="text-sm font-black text-slate-900">Postes disponibles</h2><p className="mt-0.5 text-[10px] text-slate-400">Ouvrez un poste pour consulter les candidats.</p></div>
+          <div className="flex flex-col gap-3 p-4">
             {positions.map((pos, i) => {
               const isActive = pos.is_active == 1;
               const isExpanded = expandedId === pos.id;
@@ -152,40 +146,26 @@ const ElecteurScrutins = () => {
               return (
                 <div
                   key={pos.id}
-                  className={`bg-white rounded-3xl border-2 shadow-sm overflow-hidden
+                  className={`bg-white rounded-2xl border shadow-sm overflow-hidden
                     transition-all duration-300 fade-up
-                    ${isExpanded ? 'border-emerald-100 shadow-md' : 'border-slate-100 hover:border-slate-200'}`}
+                    ${isExpanded ? 'border-emerald-300 shadow-md shadow-emerald-950/5' : 'border-slate-200 hover:border-emerald-200'}`}
                   style={{ animationDelay: `${i * 60}ms` }}
                 >
                   {/* ── row header ── */}
-                  <div className="p-5 md:p-6 flex items-start sm:items-center gap-4">
+                  <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:p-5 md:p-6">
 
                     {/* icon */}
-                    <div
-                      className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
-                        isActive ? 'bg-emerald-50 text-emerald-500' : 'bg-slate-50 text-slate-400'
-                      }`}
-                    >
-                      <Vote size={17} />
-                    </div>
-
-                    {/* title + desc — clickable */}
-                    <div
-                      className="flex-1 min-w-0 cursor-pointer"
-                      onClick={() => toggleCandidates(pos.id)}
-                    >
-                      <h3 className="font-[900] text-slate-900 text-sm md:text-base leading-tight break-words">
-                        {pos.title}
-                      </h3>
-                      {pos.description && (
-                        <p className="text-[10px] text-slate-400 font-medium mt-0.5 break-words">
-                          {pos.description}
-                        </p>
-                      )}
+                    <div className="flex min-w-0 flex-1 items-start gap-3">
+                      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${isActive ? 'bg-emerald-50 text-emerald-500' : 'bg-slate-50 text-slate-400'}`}><Vote size={17} /></div>
+                      {/* title + desc — clickable */}
+                      <div className="min-w-0 flex-1 cursor-pointer" onClick={() => toggleCandidates(pos.id)}>
+                        <h3 className="break-words text-sm font-[900] leading-tight text-slate-900 md:text-base">{pos.title}</h3>
+                        {pos.description && <p className="mt-1 line-clamp-2 break-words text-[11px] font-medium leading-relaxed text-slate-400">{pos.description}</p>}
+                      </div>
                     </div>
 
                     {/* right controls */}
-                    <div className="flex items-center gap-2 shrink-0 flex-wrap justify-end">
+                    <div className="flex w-full items-center gap-2 sm:w-auto sm:shrink-0 sm:flex-wrap sm:justify-end">
 
                       {/* status badge */}
                       {isActive ? (
@@ -217,8 +197,8 @@ const ElecteurScrutins = () => {
                       ) : (
                         <button
                           onClick={(e) => { e.stopPropagation(); openApplyModal(pos); }}
-                          className="flex items-center gap-1.5 px-3 py-2 rounded-2xl text-[10px] font-black
-                            bg-white border border-slate-100 text-slate-600 shadow-sm
+                          className="flex flex-1 items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-[10px] font-black
+                            text-slate-600 shadow-sm sm:flex-none
                             hover:bg-emerald-50 hover:text-emerald-600 hover:border-emerald-100
                             active:scale-95 transition-all duration-200"
                         >
@@ -230,7 +210,7 @@ const ElecteurScrutins = () => {
                       {/* expand toggle */}
                       <button
                         onClick={() => toggleCandidates(pos.id)}
-                        className="w-9 h-9 rounded-2xl bg-slate-50 border border-slate-100 flex items-center justify-center
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-slate-50 border border-slate-200
                           text-slate-400 hover:bg-slate-100 transition-colors"
                       >
                         {isExpanded
@@ -245,9 +225,7 @@ const ElecteurScrutins = () => {
                   {isExpanded && (
                     <div className="border-t border-slate-50 bg-slate-50/40 p-5 md:p-6">
                       {loadingCandidates[pos.id] ? (
-                        <div className="flex justify-center py-8">
-                          <div className="w-8 h-8 border-4 border-slate-100 border-t-emerald-500 rounded-full animate-spin" />
-                        </div>
+                        <Loading text="Chargement des candidats…" className="py-8" />
 
                       ) : candidatesByPos[pos.id]?.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-8 text-center">
@@ -289,133 +267,41 @@ const ElecteurScrutins = () => {
               );
             })}
           </div>
+          </section>
         )}
       </div>
 
-      {/* ── apply modal ── */}
-      {showApplyModal && applyPosition && (
-        <div className="app-modal-backdrop animate-in fade-in duration-200" role="dialog" aria-modal="true" aria-label="Déposer une candidature">
-          <div className="app-modal-panel max-w-lg modal-in flex flex-col max-h-[92vh]">
-
-            {/* modal header */}
-            <div className="px-7 py-6 border-b border-emerald-100 flex items-start justify-between shrink-0 bg-gradient-to-br from-emerald-100 to-white">
-              <div>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider text-emerald-700">
-                  Candidature
-                </span>
-                <h3 className="mt-3 text-lg font-[900] text-emerald-950">
-                  {applyPosition.title}
-                </h3>
-                <p className="text-xs font-medium text-emerald-800/70 mt-1">
-                  Présentez votre projet aux électeurs. Votre profil restera privé jusqu’à validation.
-                </p>
-              </div>
-              <button
-                onClick={() => setShowApplyModal(false)}
-                className="w-10 h-10 flex items-center justify-center rounded-2xl bg-white
-                  border border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-950
-                  transition-all"
-              >
-                <X size={16} />
+      <Modal
+        isOpen={showApplyModal && Boolean(applyPosition)}
+        onClose={() => !submitting && setShowApplyModal(false)}
+        title={applyPosition?.title || 'Déposer une candidature'}
+        subtitle="Présentez votre projet aux électeurs. Votre profil restera privé jusqu’à validation."
+      >
+        <form onSubmit={handleSubmitApplication} className="space-y-5">
+          <div>
+            <label className="modal-label">Slogan de campagne</label>
+            <input required value={form.slogan} onChange={(e) => setForm({ ...form, slogan: e.target.value })} className="modal-field" placeholder="Votre slogan phare…" />
+          </div>
+          <div>
+            <label className="modal-label">Bio / Présentation <span className="font-normal text-slate-400">(optionnelle)</span></label>
+            <textarea value={form.bio} onChange={(e) => setForm({ ...form, bio: e.target.value })} rows={3} className="modal-field resize-none" placeholder="Présentez-vous en quelques mots…" />
+          </div>
+          <div>
+            <label className="modal-label">Photo <span className="font-normal text-slate-400">(optionnelle)</span></label>
+            <div className="flex items-center gap-4 rounded-xl border border-dashed border-emerald-200 bg-emerald-50/40 p-3">
+              <button type="button" onClick={() => document.getElementById('apply-photo').click()} className="flex h-[68px] w-[68px] shrink-0 items-center justify-center overflow-hidden rounded-xl border border-dashed border-emerald-300 bg-white text-emerald-600 transition hover:bg-emerald-50">
+                {form.preview ? <img src={form.preview} className="h-full w-full object-cover" alt="Aperçu de la photo" /> : <Camera size={20} />}
               </button>
-            </div>
-
-            {/* modal body */}
-            <div className="px-7 py-6 overflow-y-auto flex flex-col gap-5 flex-1">
-
-              {/* slogan */}
-              <div>
-                <label className="modal-label">
-                  Slogan de campagne
-                </label>
-                <input
-                  required
-                  value={form.slogan}
-                  onChange={(e) => setForm({ ...form, slogan: e.target.value })}
-                  className="modal-field"
-                  placeholder="Votre slogan phare…"
-                />
-              </div>
-
-              {/* bio */}
-              <div>
-                <label className="modal-label">
-                  Bio / Présentation
-                </label>
-                <textarea
-                  value={form.bio}
-                  onChange={(e) => setForm({ ...form, bio: e.target.value })}
-                  rows={3}
-                  className="modal-field resize-none"
-                  placeholder="Présentez-vous en quelques mots…"
-                />
-              </div>
-
-              {/* photo */}
-              <div>
-                <label className="modal-label">
-                  Photo (optionnelle)
-                </label>
-                <div className="flex items-center gap-4 rounded-2xl border border-dashed border-emerald-200 bg-emerald-50/50 p-3">
-                  <div
-                    onClick={() => document.getElementById('apply-photo').click()}
-                    className="w-18 h-18 w-[72px] h-[72px] rounded-2xl bg-white border-2 border-dashed
-                      border-emerald-200 flex flex-col items-center justify-center cursor-pointer
-                      overflow-hidden hover:border-emerald-400 hover:bg-emerald-50
-                      transition-all shrink-0"
-                  >
-                    {form.preview ? (
-                      <img src={form.preview} className="w-full h-full object-cover" alt="Preview" />
-                    ) : (
-                      <>
-                        <Camera size={20} className="text-emerald-500 mb-1" />
-                        <span className="text-[8px] font-black text-emerald-600 uppercase">Ajouter</span>
-                      </>
-                    )}
-                  </div>
-                  <input
-                    id="apply-photo"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleFileChange(e.target.files[0])}
-                  />
-                  {form.preview && (
-                    <button
-                      type="button"
-                      onClick={() => setForm({ ...form, photo: null, preview: null })}
-                      className="text-[11px] font-black text-emerald-700 hover:text-emerald-950 transition-colors"
-                    >
-                      Supprimer
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* modal footer */}
-            <div className="px-7 py-5 border-t border-emerald-100 bg-emerald-50/40 flex gap-3 shrink-0">
-              <button
-                type="button"
-                onClick={() => setShowApplyModal(false)}
-                className="modal-secondary-action flex-1"
-              >
-                Annuler
-              </button>
-              <button
-                onClick={handleSubmitApplication}
-                disabled={submitting || !form.slogan}
-                className="modal-primary-action flex-[2] text-sm flex items-center justify-center gap-2"
-              >
-                {submitting
-                  ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Envoi…</>
-                  : 'Envoyer ma candidature'
-                }
-              </button>
+              <input id="apply-photo" type="file" accept="image/*" className="hidden" onChange={(e) => handleFileChange(e.target.files[0])} />
+              <div className="min-w-0"><p className="text-xs font-bold text-slate-700">Photo de campagne</p><p className="mt-1 text-[11px] text-slate-400">Cliquez sur le cadre pour sélectionner une image.</p>{form.preview && <button type="button" onClick={() => setForm({ ...form, photo: null, preview: null })} className="mt-2 text-[11px] font-bold text-emerald-700 hover:text-emerald-900">Supprimer</button>}</div>
             </div>
           </div>
-        </div>
-      )}
+          <div className="flex gap-3 border-t border-slate-100 pt-5">
+            <button type="button" onClick={() => setShowApplyModal(false)} disabled={submitting} className="modal-secondary-action flex-1">Annuler</button>
+            <button type="submit" disabled={submitting || !form.slogan} className="modal-primary-action flex-[1.35]">{submitting ? 'Envoi…' : 'Envoyer'}</button>
+          </div>
+        </form>
+      </Modal>
     </VoterLayout>
   );
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, MailQuestionMark, Lock, Eye, EyeOff, UserPlus, ShieldCheck } from 'lucide-react';
+import { User, MailQuestionMark, Lock, Eye, EyeOff, UserPlus, ShieldCheck, Vote } from 'lucide-react';
 import { Link, useNavigate } from "react-router";
 import logocts from "../assets/logo-cts2-removebg-preview.png";
 import authService from '../services/authService';
@@ -123,118 +123,25 @@ const SignUp = () => {
     }
 };
 
-    return (
-        <div className="min-h-screen flex flex-col items-center justify-center bg-white p-4 font-sans text-slate-800">
-            <div className="text-center mb-10">
-                <div className="flex justify-center mb-4">
-                    <div className="w-20 h-20 rounded-2xl flex items-center justify-center">
-                        <img src={logocts} alt='logo cts' className="w-20 h-20 object-contain" />
-                    </div>
-                </div>
-                <h1 className="text-2xl font-black uppercase text-slate-900">CYBER TECH SQUAD</h1>
-                <p className="text-slate-500 mt-2 font-medium">Créez votre compte électoral</p>
-            </div>
-
-            <div className="w-full max-w-md bg-white shadow-[0_20px_50px_rgba(0,0,0,0.05)] rounded-3xl p-8 border border-slate-50">
-                {serverError && (
-                    <div className="mb-4 p-3 bg-red-50 text-emerald-500 rounded-xl text-xs font-bold border border-red-100 text-center">
-                        {serverError}
-                    </div>
-                )}
-
-                <form onSubmit={handleSubmit} className="space-y-5">
-                    <div className="flex gap-4">
-                        <div className="form-control w-1/2">
-                            <label className="label py-0 mb-2 text-xs font-semibold text-slate-900">Prénom</label>
-                            <input
-                                name="prenom"
-                                value={formData.prenom}
-                                onChange={handleChange}
-                                type="text"
-                                placeholder="Alioune"
-                                className="input w-full h-12 pl-4 bg-slate-50 border-none focus:ring-2 focus:ring-emerald-400 rounded-xl text-slate-700 transition-all font-medium"
-                                required
-                            />
-                        </div>
-                        <div className="form-control w-1/2">
-                            <label className="label py-0 mb-2 text-xs font-semibold text-slate-900">Nom</label>
-                            <input
-                                name="nom"
-                                value={formData.nom}
-                                onChange={handleChange}
-                                type="text"
-                                placeholder="Diop"
-                                className="input w-full h-12 pl-4 bg-slate-50 border-none focus:ring-2 focus:ring-emerald-400 rounded-xl text-slate-700 transition-all font-medium"
-                                required
-                            />
-                        </div>
-                    </div>
-
-                    <div className="form-control w-full">
-                        <label className="label py-0 mb-2 text-xs font-semibold text-slate-900">Email Académique</label>
-                        <div className="relative group">
-                            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-500 transition-colors z-10">
-                                <MailQuestionMark size={18} />
-                            </div>
-                            <input
-                                name="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                type="email"
-                                placeholder="prenom.nom@uadb.edu.sn"
-                                className="input w-full h-14 pl-12 bg-slate-50 border-none focus:ring-2 focus:ring-emerald-400 rounded-2xl text-slate-700 transition-all font-medium"
-                                required
-                            />
-                        </div>
-                        {errors.email && <span className="text-emerald-400 text-[10px] font-bold mt-1 ml-2">{errors.email}</span>}
-                    </div>
-
-                    <div className="form-control w-full">
-                        <label className="label py-0 mb-2 text-xs font-semibold text-slate-900">Mot de Passe</label>
-                        <div className="relative group">
-                            <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-slate-400 group-focus-within:text-emerald-500 transition-colors z-10">
-                                <Lock size={18} />
-                            </div>
-                            <input
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                type={showPassword ? "text" : "password"}
-                                placeholder="••••••••••••"
-                                className="input w-full h-14 pl-12 pr-12 bg-slate-50 border-none focus:ring-2 focus:ring-emerald-400 rounded-2xl text-slate-700 transition-all"
-                                required
-                            />
-                            <button
-                                type="button"
-                                onClick={() => setShowPassword(!showPassword)}
-                                className="absolute inset-y-0 right-0 px-4 flex items-center z-20 text-slate-400 hover:text-emerald-500"
-                            >
-                                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-                            </button>
-                        </div>
-                        {errors.password && <span className="text-emerald-400 text-[10px] font-bold mt-1 ml-2">{errors.password}</span>}
-                    </div>
-
-                    <button
-                        disabled={loading || errors.email || errors.password || !formData.email}
-                        type='submit'
-                        className="btn btn-primary w-full h-14 bg-[#00d991] hover:bg-[#00c282] border-none text-slate-900 font-bold normal-case rounded-2xl flex items-center justify-center gap-3 shadow-lg shadow-emerald-100 mt-4 transition-all"
-                    >
-                        {loading ? <span className="loading loading-spinner"></span> : <><UserPlus size={20} /> Créer mon compte</>}
-                    </button>
+    return <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-slate-50 px-4 py-8 text-slate-800">
+        <div className="pointer-events-none absolute -left-32 bottom-0 h-80 w-80 rounded-full bg-emerald-100/70 blur-3xl" />
+        <div className="pointer-events-none absolute -right-32 top-0 h-80 w-80 rounded-full bg-emerald-50 blur-3xl" />
+        <section className="relative w-full max-w-[23rem]">
+            <header className="mb-6 text-center"><div className="mb-4 flex items-center justify-center gap-2.5 whitespace-nowrap"><img src={logocts} alt="Cyber Tech Squad" className="h-14 w-14 object-contain mix-blend-multiply" /><span className="text-left text-lg font-black text-slate-900">Cyber Tech <span className="text-emerald-600">Squad</span></span></div><p className="mt-2 text-sm text-slate-500">Rejoignez la plateforme électorale.</p></header>
+            <div className="rounded-3xl border border-slate-200 bg-white p-5 shadow-xl shadow-slate-200/50 sm:p-7">
+                {serverError && <div className="mb-5 rounded-xl border border-red-100 bg-red-50 p-3 text-center text-xs font-semibold text-red-700">{serverError}</div>}
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="flex items-center gap-3"><span className="h-px flex-1 bg-slate-100" /><span className="flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-100 bg-emerald-50 text-emerald-600"><Vote size={22} /></span><span className="h-px flex-1 bg-slate-100" /></div>
+                    <div className="grid grid-cols-2 gap-3"><div><label className="mb-2 block text-xs font-bold text-slate-700">Prénom</label><input name="prenom" value={formData.prenom} onChange={handleChange} type="text" placeholder="Alioune" className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100" required /></div><div><label className="mb-2 block text-xs font-bold text-slate-700">Nom</label><input name="nom" value={formData.nom} onChange={handleChange} type="text" placeholder="Diop" className="h-11 w-full rounded-xl border border-slate-200 bg-slate-50 px-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100" required /></div></div>
+                    <div><label className="mb-2 block text-xs font-bold text-slate-700">Adresse institutionnelle</label><div className="relative"><MailQuestionMark size={17} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" /><input name="email" value={formData.email} onChange={handleChange} type="email" placeholder="prenom.nom@uadb.edu.sn" className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100" required /></div>{errors.email && <p className="mt-1.5 text-[11px] font-medium text-red-600">{errors.email}</p>}</div>
+                    <div><label className="mb-2 block text-xs font-bold text-slate-700">Mot de passe</label><div className="relative"><Lock size={17} className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" /><input name="password" value={formData.password} onChange={handleChange} type={showPassword ? 'text' : 'password'} placeholder="12 caractères minimum" className="h-12 w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-11 text-sm outline-none transition placeholder:text-slate-400 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100" required /><button type="button" onClick={() => setShowPassword((value) => !value)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-emerald-600" aria-label="Afficher ou masquer le mot de passe">{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></div>{errors.password && <p className="mt-1.5 text-[11px] font-medium text-red-600">{errors.password}</p>}</div>
+                    <button disabled={loading || Boolean(errors.email || errors.password) || !formData.email || !browserId} type="submit" className="mt-2 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 text-sm font-bold text-white shadow-lg shadow-emerald-500/20 transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60">{loading ? <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" /> : <UserPlus size={17} />}{loading ? 'Création…' : 'Créer mon compte'}</button>
                 </form>
-
-                <p className="text-center mt-8 text-sm text-slate-500 font-medium">
-                    Déjà inscrit ? <Link to="/login" className="text-emerald-600 font-bold hover:underline">Se connecter</Link>
-                </p>
+                <p className="mt-5 text-center text-xs text-slate-500">Déjà inscrit ? <Link to="/login" className="font-bold text-emerald-700 hover:underline">Se connecter</Link></p>
             </div>
-
-            <div className="mt-12 flex items-center gap-2 px-4 py-2 border border-emerald-100 rounded-full bg-emerald-50/50">
-                <ShieldCheck className="text-emerald-500" size={16} />
-                <span className="text-[10px] font-black text-emerald-600 uppercase">Technologie-Sécurité-Innovation</span>
-            </div>
-        </div>
-    );
+            <p className="mt-5 flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-wide text-slate-400"><ShieldCheck size={13} className="text-emerald-500" /> Technologie · Sécurité · Innovation</p>
+        </section>
+    </main>;
 };
 
 export default SignUp;

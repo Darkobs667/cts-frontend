@@ -15,15 +15,16 @@ const ElectionRow = ({ election, index }) => {
   const isActive = election.statut === 'Actif';
   return (
     <article
-      className="group relative overflow-hidden rounded-3xl border border-slate-100 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-950/5 fade-up"
+      className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-lg hover:shadow-emerald-950/5 fade-up"
       style={{ animationDelay: `${index * 60}ms` }}
     >
       <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-emerald-400 via-emerald-500 to-teal-400 opacity-0 transition-opacity group-hover:opacity-100" />
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${isActive ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}><Vote size={20} /></div>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+        <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${isActive ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-100 text-slate-400'}`}><Vote size={20} /></div>
         <div className="min-w-0 flex-1">
           <p className="text-[9px] font-black uppercase tracking-[0.16em] text-emerald-600">Scrutin</p>
-          <h4 className="mt-1 truncate text-base font-black text-slate-900">{election.titre}</h4>
+          <h4 className="mt-1 break-words text-base font-black leading-snug text-slate-900">{election.titre}</h4>
+          <p className="mt-1 line-clamp-2 max-w-2xl break-words text-[11px] font-medium leading-relaxed text-slate-500">{election.description || 'Aucune description renseignée pour ce scrutin.'}</p>
           <p className="mt-1 flex items-center gap-1.5 text-[11px] font-medium text-slate-400"><Calendar size={12} /> Créé le {new Date(election.date_fin).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
         </div>
         {isActive ? (
@@ -42,7 +43,7 @@ const ElectionRow = ({ election, index }) => {
         )}
         <Link
           to="/votes-elections"
-          className="inline-flex items-center gap-1.5 rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-[10px] font-black text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 group/link"
+          className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-[10px] font-black text-emerald-700 transition hover:border-emerald-300 hover:bg-emerald-100 group/link"
         >
           Détails
           <ArrowRight size={11} className="group-hover/link:translate-x-0.5 transition-transform" />
@@ -135,7 +136,7 @@ const Dashboard = () => {
 
       <div className="max-w-5xl mx-auto animate-in fade-in duration-500">
 
-        <div className="flex items-end justify-between mb-10 fade-up">
+        <div className="flex flex-col justify-between gap-4 mb-8 sm:flex-row sm:items-end fade-up">
           <div>
             <h2 className="text-xl md:text-2xl font-[900] text-slate-900">Tableau de bord</h2>
             <p className="text-slate-400 font-medium text-xs mt-1">Vue d'ensemble de la plateforme</p>
@@ -150,16 +151,14 @@ const Dashboard = () => {
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 mb-8">
           {statCards.map((s, i) => (
             <ModernStatCard key={i} {...s} />
           ))}
         </div>
 
-        <div
-          className="bg-white rounded-[36px] border border-slate-100 shadow-sm overflow-hidden fade-up"
-          style={{ animationDelay: '240ms' }}
-        >
+        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_280px] fade-up" style={{ animationDelay: '240ms' }}>
+        <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="px-7 py-6 border-b border-slate-50 flex items-center justify-between">
             <div>
               <h3 className="text-sm font-[900] text-slate-900">
@@ -184,7 +183,7 @@ const Dashboard = () => {
             </Link>
           </div>
 
-          <div className="grid gap-3 p-4 sm:grid-cols-2">
+          <div className="flex flex-col gap-3 p-4">
             {isLoading && recentElections.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-16 gap-3">
                 <div className="w-10 h-10 border-4 border-slate-100 border-t-emerald-500 rounded-full animate-spin" />
@@ -225,6 +224,7 @@ const Dashboard = () => {
                             </span>
                           )}
                         </div>
+                        <p className="mb-3 line-clamp-2 text-[11px] leading-relaxed text-slate-500">{election.description || 'Aucune description renseignée pour ce scrutin.'}</p>
                         <div className="flex items-center justify-between">
                           <span className="text-[9px] text-slate-400 font-bold">
                             {new Date(election.date_fin).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
@@ -246,6 +246,21 @@ const Dashboard = () => {
               </>
             )}
           </div>
+        </section>
+
+        <aside className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-black text-slate-900">Pilotage rapide</h3>
+            <TrendingUp size={18} className="text-emerald-500" />
+          </div>
+          <p className="mt-1 text-[11px] leading-relaxed text-slate-400">L’essentiel de l’activité électorale en un coup d’œil.</p>
+          <div className="mt-5 space-y-3">
+            <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-3.5"><p className="text-[10px] font-bold text-emerald-700">Scrutins en cours</p><p className="mt-1 text-2xl font-black text-emerald-800">{stats.votesEnCours}</p></div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3.5"><p className="text-[10px] font-bold text-slate-500">Participation globale</p><p className="mt-1 text-2xl font-black text-slate-800">{stats.participation}%</p></div>
+          </div>
+          <Link to="/votes-elections" className="mt-5 flex items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-3 text-[11px] font-black text-white shadow-lg shadow-emerald-500/20 transition hover:-translate-y-0.5 hover:bg-emerald-700">Gérer les scrutins <ArrowRight size={13} /></Link>
+          <div className="mt-5 border-t border-slate-100 pt-4 text-[10px] leading-relaxed text-slate-400"><span className="font-bold text-slate-600">Mise à jour automatique.</span> Les données sont actualisées toutes les deux minutes.</div>
+        </aside>
         </div>
 
       </div>

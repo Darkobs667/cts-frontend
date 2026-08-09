@@ -5,6 +5,7 @@ import { LayoutDashboard, Users, Vote, ExternalLink, LogOut, ChartPie, MailOpen,
 import { Link, useLocation, useNavigate } from 'react-router';
 import Logocts from "../assets/logo-cts2-removebg-preview.png";
 import { useState } from 'react';
+import { useAuth } from '../hooks/useAuth';
 
 const SidebarItem = ({ icon: Icon, label, to, active }) => (
   <Link
@@ -35,14 +36,12 @@ const Sidebar = ({ isOpen, toggle, activePage }) => {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     setIsLoggingOut(true);
-    setTimeout(() => {
-      localStorage.clear();
-      sessionStorage.clear();
-      navigate('/login');
-    }, 1200);
+    await logout();
+    navigate('/login', { replace: true });
   };
 
   const adminMenuItems = [
@@ -73,9 +72,7 @@ const Sidebar = ({ isOpen, toggle, activePage }) => {
         {/* ── logo ── */}
         <div className="px-6 py-6 flex items-center justify-between border-b border-slate-50">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-2xl overflow-hidden border border-slate-100 shadow-sm shrink-0">
-              <img src={Logocts} className="w-full h-full object-contain" alt="logo cts" />
-            </div>
+            <img src={Logocts} className="h-10 w-10 shrink-0 object-contain mix-blend-multiply" alt="logo cts" />
             <div className="leading-tight">
               <span className="block text-[9px] font-[900] uppercase text-slate-300 tracking-widest">
                 Cyber Tech

@@ -2,9 +2,7 @@
 import { Routes, Route, Navigate } from "react-router";
 import { lazy, Suspense } from 'react';
 import ProtectedRoute from "./Components/ProtectedRoute.jsx";
-import { useAuth } from './hooks/useAuth';
 import { AnimatePresence, motion } from 'framer-motion';
-import Loading from './Components/Loading';
 
 const LoginCTS = lazy(() => import('./Pages/Login.jsx'));
 const SignUp = lazy(() => import('./Pages/signup.jsx'));
@@ -17,26 +15,13 @@ const VoterChoice = lazy(() => import('./Components/VoterChoice.jsx'));
 const VoterBallot = lazy(() => import('./Pages/VoterBallot.jsx'));
 const VoterRecap = lazy(() => import('./Components/VoterRecap.jsx'));
 const VoterHistory = lazy(() => import('./Pages/VoterHistory.jsx'));
-const VoterProfile = lazy(() => import('./Pages/VoterProfile.jsx'));
 const AdminresultsPage = lazy(() => import('./Pages/adminresult.jsx'));
 const ElecteurScrutins = lazy(() => import('./Pages/ElecteurScrutins.jsx'));
 const AdminCandidatures = lazy(() => import('./Pages/AdminCandidatures.jsx'));
 
-const PageLoader = () => (
-    <div className="min-h-screen bg-slate-50"><Loading text="Chargement de la page…" className="min-h-screen" /></div>
-);
-
 function AppContent() {
-    const { loading } = useAuth();
-    
-    if (loading) {
-        return (
-            <div className="min-h-screen bg-slate-50"><Loading text="Chargement de votre session…" className="min-h-screen" /></div>
-        );
-    }
-    
     return (
-        <Suspense fallback={<PageLoader />}>
+        <Suspense fallback={null}>
         <AnimatePresence mode="wait">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
         <Routes>
@@ -69,11 +54,7 @@ function AppContent() {
                     <VoterHistory />
                 </ProtectedRoute>
             } />
-            <Route path="/voterProfile" element={
-                <ProtectedRoute allowedRole="electeur">
-                    <VoterProfile />
-                </ProtectedRoute>
-            } />
+            <Route path="/voterProfile" element={<Navigate to="/voterDashboard" replace />} />
             <Route path="/scrutins" element={
                 <ProtectedRoute allowedRole="electeur">
                     <ElecteurScrutins />

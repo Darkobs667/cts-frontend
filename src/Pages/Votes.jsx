@@ -32,8 +32,8 @@ const ElectionCard = ({ election, index, onEdit, onDelete, onToggle }) => {
 
   return (
     <div
-      className="group relative bg-white rounded-3xl border border-slate-100 shadow-sm
-        hover:shadow-md hover:border-emerald-100 transition-all duration-300 p-6 md:p-7 fade-up"
+      className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm
+        transition-all duration-300 hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-lg hover:shadow-emerald-950/5 fade-up"
       style={{ animationDelay: `${index * 70}ms` }}
     >
       {/* active left accent */}
@@ -41,13 +41,13 @@ const ElectionCard = ({ election, index, onEdit, onDelete, onToggle }) => {
         <span className="absolute left-0 top-6 bottom-6 w-1 rounded-r-full bg-gradient-to-b from-emerald-400 to-emerald-600" />
       )}
 
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
 
         {/* left — logo + info */}
-        <div className="flex items-center gap-5">
+        <div className="flex items-center gap-4">
           {/* logo */}
           <div
-            className={`w-16 h-16 rounded-2xl overflow-hidden border-2 shrink-0 transition-all duration-300
+            className={`w-12 h-12 rounded-xl overflow-hidden border shrink-0 transition-all duration-300
               ${isActive
                 ? 'border-emerald-200 shadow-md shadow-emerald-50'
                 : 'border-slate-100 group-hover:border-emerald-100'
@@ -58,24 +58,27 @@ const ElectionCard = ({ election, index, onEdit, onDelete, onToggle }) => {
 
           {/* text */}
           <div>
-            <div className="flex items-center gap-3 mb-1.5">
+            <p className="mb-1 text-[9px] font-black uppercase tracking-[0.16em] text-emerald-600">Scrutin configuré</p>
+            <div className="flex items-center gap-3 mb-1">
               <h4 className="font-[900] text-base md:text-lg text-slate-900 leading-tight">
                 {election.title}
               </h4>
             </div>
-            {election.description && (
-              <p className="text-slate-400 text-xs font-medium mb-2">{election.description}</p>
+            {election.description ? (
+              <p className="mb-2 max-w-xl break-words text-xs font-medium leading-relaxed text-slate-500">{election.description}</p>
+            ) : (
+              <p className="mb-2 text-xs font-medium italic text-slate-400">Aucune description renseignée pour ce scrutin.</p>
             )}
-            <StatusBadge isActive={election.is_active} />
+            <div className="mt-2"><StatusBadge isActive={election.is_active} /></div>
           </div>
         </div>
 
         {/* right — actions */}
-        <div className="flex items-center gap-2 justify-end shrink-0">
+        <div className="flex w-full items-center gap-2 md:w-auto md:justify-end md:shrink-0">
           <button
             onClick={() => onEdit(election)}
             title="Modifier"
-            className="w-10 h-10 flex items-center justify-center rounded-2xl text-slate-300 hover:bg-emerald-50 hover:text-emerald-600 transition-all duration-200"
+            className="w-9 h-9 flex items-center justify-center rounded-xl border border-transparent text-slate-300 hover:border-emerald-100 hover:bg-emerald-50 hover:text-emerald-600 transition-all duration-200"
           >
             <Edit3 size={17} />
           </button>
@@ -84,8 +87,8 @@ const ElectionCard = ({ election, index, onEdit, onDelete, onToggle }) => {
           <button
             onClick={() => onDelete(election.id)}
             title="Supprimer"
-            className="w-10 h-10 flex items-center justify-center rounded-2xl text-slate-300
-              hover:bg-red-50 hover:text-red-400 transition-all duration-200"
+            className="w-9 h-9 flex items-center justify-center rounded-xl border border-transparent text-slate-300
+              hover:border-red-100 hover:bg-red-50 hover:text-red-400 transition-all duration-200"
           >
             <Trash2 size={17} />
           </button>
@@ -94,7 +97,7 @@ const ElectionCard = ({ election, index, onEdit, onDelete, onToggle }) => {
           <button
             onClick={() => onToggle(election)}
             title={isActive ? 'Désactiver' : 'Activer'}
-            className={`flex items-center gap-2 px-5 py-2.5 rounded-2xl text-[10px] font-black
+            className={`flex flex-1 items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-[10px] font-black md:flex-none
               shadow-sm active:scale-95 transition-all duration-200
               ${isActive
                 ? 'bg-red-500 text-white hover:bg-red-600 shadow-red-100'
@@ -196,7 +199,7 @@ const Votes = () => {
       <div className="max-w-5xl mx-auto animate-in fade-in duration-500">
 
         {/* ── header ── */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6 fade-up">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-6 fade-up">
           <div>
             <h2 className="text-xl md:text-2xl font-[900] text-slate-900">
               Élections & Scrutins
@@ -224,7 +227,7 @@ const Votes = () => {
             <button
               onClick={() => setShowModal(true)}
               className="flex items-center gap-2 h-11 bg-emerald-500 hover:bg-emerald-600
-                text-white rounded-2xl px-6 shadow-lg shadow-emerald-100
+                text-white rounded-xl px-5 shadow-lg shadow-emerald-100
                 active:scale-95 transition-all font-black text-[11px]"
             >
               <Plus size={17} />
@@ -237,7 +240,12 @@ const Votes = () => {
         {loading ? (
           <Loading text="Chargement des scrutins…" className="py-32" />
         ) : elections.length > 0 ? (
-          <div className="flex flex-col gap-4">
+          <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            <div className="flex items-center justify-between border-b border-slate-100 px-5 py-4 md:px-6">
+              <div><h3 className="text-sm font-black text-slate-900">Liste des scrutins</h3><p className="mt-0.5 text-[10px] font-medium text-slate-400">Activez, modifiez ou clôturez chaque scrutin.</p></div>
+              <span className="rounded-lg bg-slate-100 px-2.5 py-1 text-[10px] font-black text-slate-500">{elections.length}</span>
+            </div>
+          <div className="flex flex-col gap-3 p-4">
             {elections.map((election, i) => (
               <ElectionCard
                 key={election.id}
@@ -249,6 +257,7 @@ const Votes = () => {
               />
             ))}
           </div>
+          </section>
         ) : (
           <div className="flex flex-col items-center justify-center py-32 bg-white rounded-[40px] border border-slate-100 shadow-sm fade-up">
             <div className="w-20 h-20 bg-slate-50 rounded-[30px] border-2 border-dashed border-slate-200 flex items-center justify-center mb-6">

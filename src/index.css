@@ -35,39 +35,39 @@
 
 @layer components {
   .app-modal-backdrop {
-    @apply fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-emerald-950/45 p-4 backdrop-blur-sm;
+    @apply fixed inset-0 z-[100] flex items-center justify-center overflow-y-auto bg-slate-950/45 p-4 backdrop-blur-sm;
   }
 
   .app-modal-panel {
-    @apply my-auto w-full overflow-hidden rounded-[32px] border border-emerald-200 bg-white text-emerald-950 shadow-2xl shadow-emerald-950/25;
+    @apply my-auto w-full overflow-hidden rounded-[24px] border border-emerald-200 bg-white text-slate-900 shadow-2xl shadow-slate-950/25;
   }
 
   .modal-label {
-    @apply mb-2 block text-[9px] font-black uppercase tracking-[0.16em] text-emerald-700;
+    @apply mb-2 block text-[10px] font-bold text-slate-600;
   }
 
   .modal-field {
-    @apply w-full rounded-2xl border border-emerald-200 bg-emerald-50/60 px-4 py-3.5 text-sm font-medium text-emerald-950 outline-none transition placeholder:text-emerald-400 hover:border-emerald-300 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-200/70;
+    @apply w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-emerald-300 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100;
   }
 
   .modal-select {
-    @apply w-full appearance-none rounded-2xl border border-emerald-200 bg-emerald-50/60 px-4 py-3.5 text-sm font-medium text-emerald-950 outline-none transition hover:border-emerald-300 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-200/70;
+    @apply w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 outline-none transition hover:border-emerald-300 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100;
   }
 
   .modal-select option {
-    @apply bg-white text-emerald-950;
+    @apply bg-white text-slate-900;
   }
 
   .modal-secondary-action {
-    @apply rounded-2xl border border-emerald-200 bg-white px-4 py-3.5 text-[11px] font-black text-emerald-700 transition hover:bg-emerald-50 hover:text-emerald-950 active:scale-[0.98];
+    @apply rounded-xl border border-slate-200 bg-white px-4 py-3 text-[12px] font-bold text-slate-600 transition hover:bg-slate-50 hover:text-slate-900 active:scale-[0.98];
   }
 
   .modal-primary-action {
-    @apply rounded-2xl bg-emerald-600 px-4 py-3.5 text-[11px] font-black text-white shadow-lg shadow-emerald-500/25 transition hover:-translate-y-0.5 hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
+    @apply rounded-xl bg-emerald-600 px-4 py-3 text-[12px] font-bold text-white shadow-lg shadow-emerald-500/20 transition hover:-translate-y-0.5 hover:bg-emerald-700 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60;
   }
 
   .kpi-card {
-    @apply relative overflow-hidden rounded-3xl border border-slate-200/70 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg hover:shadow-slate-200/60;
+    @apply relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-emerald-200 hover:shadow-lg hover:shadow-emerald-950/5;
   }
 }
 

@@ -6,19 +6,24 @@ const sizes = { sm: 'max-w-md', md: 'max-w-[30rem]', lg: 'max-w-2xl' };
 
 export default function Modal({ isOpen, onClose, title, subtitle, children, size = 'md' }) {
   const dialogRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
 
   useEffect(() => {
     if (!isOpen) return undefined;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
     dialogRef.current?.focus();
-    const onKeyDown = (event) => { if (event.key === 'Escape') onClose(); };
+    const onKeyDown = (event) => { if (event.key === 'Escape') onCloseRef.current(); };
     window.addEventListener('keydown', onKeyDown);
     return () => {
       document.body.style.overflow = previousOverflow;
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   return (
     <AnimatePresence>

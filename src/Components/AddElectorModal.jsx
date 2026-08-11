@@ -77,7 +77,7 @@ const AddElectorModal = ({ close, onAdd }) => {
               type="submit"
               className="modal-primary-action flex-1 flex items-center justify-center gap-2"
             >
-              <CheckCircle2 size={18} /> Valider l'accès
+              <CheckCircle2 size={18} /> Valider
             </button>
           </div>
         </form>

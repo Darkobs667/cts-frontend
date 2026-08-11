@@ -267,7 +267,7 @@ const Electeurs = () => {
                 onClick={handleAssociate}
                 className="modal-primary-action flex-1 flex items-center justify-center gap-3"
               >
-                <UserCheck size={20} /> Associer les électeurs sélectionnés
+                <UserCheck size={20} /> Associer
               </button>
             </div>
         </Modal>

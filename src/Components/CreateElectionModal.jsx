@@ -93,7 +93,7 @@ const CreateElectionModal = ({ close, initialData = null }) => {
           <button type="submit" disabled={loading}
             className="modal-primary-action flex-1 flex items-center justify-center gap-3">
             {loading ? 'Enregistrement...' : (isEditing ? <Save size={20} /> : <CheckCircle2 size={20} />)}
-            {isEditing ? 'Modifier le scrutin' : 'Enregistrer le poste'}
+            {isEditing ? 'Enregistrer' : 'Enregistrer'}
           </button>
           </div>
         </form>

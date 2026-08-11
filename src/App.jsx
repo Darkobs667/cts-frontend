@@ -2,7 +2,6 @@
 import { Routes, Route, Navigate } from "react-router";
 import { lazy, Suspense } from 'react';
 import ProtectedRoute from "./Components/ProtectedRoute.jsx";
-import { AnimatePresence, motion } from 'framer-motion';
 
 const LoginCTS = lazy(() => import('./Pages/Login.jsx'));
 const SignUp = lazy(() => import('./Pages/signup.jsx'));
@@ -22,8 +21,6 @@ const AdminCandidatures = lazy(() => import('./Pages/AdminCandidatures.jsx'));
 function AppContent() {
     return (
         <Suspense fallback={null}>
-        <AnimatePresence mode="wait">
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -8 }} transition={{ duration: 0.22 }}>
         <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<LoginCTS />} />
@@ -94,8 +91,6 @@ function AppContent() {
 
             <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
-        </motion.div>
-        </AnimatePresence>
         </Suspense>
     );
 }

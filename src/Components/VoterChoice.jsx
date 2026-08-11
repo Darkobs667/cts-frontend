@@ -283,7 +283,7 @@ const VoterChoice = () => {
               <button type="button" onClick={() => setIsConfirmOpen(false)} disabled={isSubmitting} className="modal-secondary-action flex-1">Retour</button>
               <button type="button" onClick={submitVote} disabled={isSubmitting} className="modal-primary-action flex-[1.4] flex items-center justify-center gap-2">
                 {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                {isSubmitting ? 'Enregistrement…' : 'Enregistrer mon vote'}
+                {isSubmitting ? 'Enregistrement…' : 'Voter'}
               </button>
             </div>
           </div>

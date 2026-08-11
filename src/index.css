@@ -31,6 +31,14 @@
   button, input, textarea, select {
     font: inherit;
   }
+
+  /* Safari/iOS agrandit automatiquement toute la page lorsqu'un champ fait
+     moins de 16 px. Les modales et formulaires restent ainsi stables. */
+  @media (max-width: 767px) {
+    input, textarea, select {
+      font-size: 16px !important;
+    }
+  }
 }
 
 @layer components {
@@ -47,11 +55,11 @@
   }
 
   .modal-field {
-    @apply w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-emerald-300 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100;
+    @apply w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-medium text-slate-800 outline-none transition placeholder:text-slate-400 hover:border-emerald-300 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100 sm:text-sm;
   }
 
   .modal-select {
-    @apply w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800 outline-none transition hover:border-emerald-300 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100;
+    @apply w-full appearance-none rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-base font-medium text-slate-800 outline-none transition hover:border-emerald-300 focus:border-emerald-500 focus:bg-white focus:ring-4 focus:ring-emerald-100 sm:text-sm;
   }
 
   .modal-select option {

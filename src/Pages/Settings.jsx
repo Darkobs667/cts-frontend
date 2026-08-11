@@ -306,7 +306,7 @@ const Candidats = () => {
                 ) : (
                   <CheckCircle2 size={20} />
                 )}
-                {editingCandidate ? 'Enregistrer les modifications' : 'Ajouter le candidat'}
+                {editingCandidate ? 'Enregistrer' : 'Ajouter'}
               </button>
             </div>
             </form>

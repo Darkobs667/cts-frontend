@@ -38,6 +38,7 @@ const NavItem = ({ item, isActive }) => (
 
 const VoterLayout = ({ children, activePage }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   
@@ -51,6 +52,9 @@ const VoterLayout = ({ children, activePage }) => {
   ];
 
   const handleLogout = async () => {
+    if (isLoggingOut) return;
+    setIsLoggingOut(true);
+    setIsSidebarOpen(false);
     await logout();
     navigate('/login', { replace: true });
   };
@@ -135,16 +139,17 @@ const VoterLayout = ({ children, activePage }) => {
         <div className="px-3 pb-4 border-t border-slate-50 pt-3">
           <button
             onClick={handleLogout}
+            disabled={isLoggingOut}
             className="w-full flex items-center gap-3.5 px-4 py-3 rounded-2xl
               text-red-400 hover:bg-red-50 hover:text-red-500
-              transition-all duration-200 active:scale-95 group"
+              transition-all duration-200 active:scale-95 group disabled:cursor-not-allowed disabled:opacity-60"
           >
             <div className="w-8 h-8 rounded-xl bg-red-50 flex items-center justify-center shrink-0
               group-hover:bg-red-100 transition-colors">
               <LogOut size={15} className="group-hover:-translate-x-0.5 transition-transform" />
             </div>
             <span className="text-[11px] font-[900]">
-              Déconnexion
+              {isLoggingOut ? 'Déconnexion…' : 'Déconnexion'}
             </span>
           </button>
         </div>
